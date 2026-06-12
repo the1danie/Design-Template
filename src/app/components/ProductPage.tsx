@@ -714,6 +714,9 @@ export function ProductPage() {
   const [reviewFilter, setReviewFilter] = useState<number | null>(null);
   const reviewsRef = useRef<HTMLDivElement>(null);
 
+  const cartButtonRef = useRef<HTMLDivElement>(null);
+  const [showStickyPanel, setShowStickyPanel] = useState(false);
+
   const sortedFilteredReviews = [...reviews]
     .filter((r) => reviewFilter === null || r.rating === reviewFilter)
     .sort((a, b) => {
@@ -748,6 +751,17 @@ export function ProductPage() {
     setReviews((prev) => prev.filter((r) => r.id !== id));
     setOwnReviewIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
   }
+
+  useEffect(() => {
+    const el = cartButtonRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyPanel(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="bg-[#fbfbf8] min-h-screen">
@@ -858,11 +872,13 @@ export function ProductPage() {
                 <button onClick={() => setQty(qty + 1)}
                   className="w-[44px] h-[50px] flex items-center justify-center text-[#374957] hover:bg-[#f5f3ed] transition-colors font-['Manrope',sans-serif] text-[20px]">+</button>
               </div>
-              <AnimatedCartButton
-                qty={qty}
-                className="flex-1 h-[50px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[15px] text-white"
-                iconSize={17}
-              />
+              <div ref={cartButtonRef} className="flex-1">
+                <AnimatedCartButton
+                  qty={qty}
+                  className="w-full h-[50px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[15px] text-white"
+                  iconSize={17}
+                />
+              </div>
               <button onClick={handleFavorite}
                 className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors"
                 style={{ background: "#fff" }}>
@@ -1163,6 +1179,38 @@ export function ProductPage() {
             })}
           </div>
         </section>
+
+        {/* ── Sticky Buy Panel ── */}
+        <AnimatePresence>
+          {showStickyPanel && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 36 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-[#fbfbf8]/95 backdrop-blur-md border-t border-[rgba(55,73,87,0.1)]"
+            >
+              <div className="max-w-[1440px] mx-auto px-[80px] py-[14px] flex items-center gap-[20px]">
+                <img
+                  src={GALLERY[activeImg]}
+                  alt=""
+                  className="w-[48px] h-[48px] rounded-[10px] object-cover shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-['Manrope',sans-serif] font-semibold text-[14px] text-black truncate">{product.name}</p>
+                  <p className="font-['Manrope',sans-serif] font-bold text-[18px] text-black leading-none">
+                    {product.price.toLocaleString("ru-RU")} ₸
+                  </p>
+                </div>
+                <AnimatedCartButton
+                  qty={qty}
+                  className="shrink-0 h-[46px] px-[28px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[14px] text-white"
+                  iconSize={16}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>
