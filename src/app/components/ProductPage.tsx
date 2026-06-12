@@ -643,6 +643,50 @@ function ReviewCard({ review, isOwn, onEdit, onDelete }: {
   );
 }
 
+// ── Accordion ────────────────────────────────────────────────────────────────
+
+function AccordionItem({ title, defaultOpen = false, children }: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-[rgba(55,73,87,0.1)] last:border-none">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between py-[20px] text-left group"
+      >
+        <span
+          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="font-bold text-[20px] text-black group-hover:text-[#315350] transition-colors"
+        >
+          {title}
+        </span>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25 }}>
+          <ChevronDown size={20} className="text-[#92887d] shrink-0" />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="pb-[28px]">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function ProductPage() {
