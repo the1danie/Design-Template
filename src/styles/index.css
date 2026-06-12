@@ -1,0 +1,194 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+@keyframes crafty-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes crafty-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes crafty-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes crafty-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes crafty-testimonials-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes crafty-testimonials-down {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes crafty-scroll-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.crafty-fade-up {
+  animation: crafty-fade-up 560ms ease-out both;
+}
+
+.crafty-delay-1 {
+  animation-delay: 90ms;
+}
+
+.crafty-delay-2 {
+  animation-delay: 180ms;
+}
+
+.crafty-delay-3 {
+  animation-delay: 270ms;
+}
+
+.crafty-delay-4 {
+  animation-delay: 360ms;
+}
+
+.crafty-section {
+  animation: crafty-fade-up 620ms ease-out both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 22%;
+}
+
+.crafty-lift {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease, color 220ms ease;
+}
+
+.crafty-lift:hover {
+  transform: translateY(-4px);
+}
+
+.crafty-soft-lift {
+  transition: transform 220ms ease, box-shadow 220ms ease, opacity 220ms ease;
+}
+
+.crafty-soft-lift:hover {
+  transform: translateY(-3px);
+}
+
+.crafty-image-shift {
+  transition: transform 280ms ease;
+}
+
+.group:hover .crafty-image-shift {
+  transform: translate(4px, -4px) scale(1.02);
+}
+
+.crafty-float {
+  animation: crafty-float 6s ease-in-out infinite;
+}
+
+.crafty-float-slow {
+  animation: crafty-float 7s ease-in-out infinite;
+  animation-delay: 700ms;
+}
+
+.crafty-pop-hover:hover {
+  animation: crafty-pop 260ms ease-out;
+}
+
+.crafty-testimonials-track {
+  animation-name: crafty-testimonials-up;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.crafty-testimonials-track[data-direction="down"] {
+  animation-name: crafty-testimonials-down;
+}
+
+.crafty-testimonials-column:hover .crafty-testimonials-track {
+  animation-play-state: paused;
+}
+
+.crafty-scroll-container {
+  mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.crafty-infinite-scroll {
+  animation: crafty-scroll-x 42s linear infinite;
+}
+
+.crafty-scroll-container:hover .crafty-infinite-scroll {
+  animation-play-state: paused;
+}
+
+.crafty-cta-gradient {
+  background-size: 180% 180%;
+  animation: crafty-gradient 14s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crafty-fade-up,
+  .crafty-section,
+  .crafty-float,
+  .crafty-float-slow,
+  .crafty-testimonials-track,
+  .crafty-infinite-scroll,
+  .crafty-cta-gradient,
+  .crafty-pop-hover:hover {
+    animation: none;
+  }
+
+  .crafty-lift,
+  .crafty-soft-lift,
+  .crafty-image-shift {
+    transition: none;
+  }
+
+  .crafty-lift:hover,
+  .crafty-soft-lift:hover,
+  .group:hover .crafty-image-shift {
+    transform: none;
+  }
+}
