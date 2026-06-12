@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
-import { animate, motion, AnimatePresence, useMotionValue, useTransform } from "motion/react";
+import { animate, motion, AnimatePresence, useMotionValue, useTransform, useAnimationControls } from "motion/react";
 import { useCart } from "../context/CartContext";
 import {
   ChevronRight, Heart, ShoppingCart, Truck, Shield, RotateCcw,
@@ -700,6 +700,8 @@ export function ProductPage() {
 
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
+  const [favorited, setFavorited] = useState(false);
+  const heartControls = useAnimationControls();
 
   // Modals
   const [shareModal, setShareModal] = useState(false);
@@ -738,7 +740,14 @@ export function ProductPage() {
     const redirect = `${location.pathname}${location.search}${location.hash}`;
     navigate(`/login?redirect=${encodeURIComponent(redirect)}&action=${action}`);
   }
-  function handleFavorite() { requireAuth("favorite"); }
+  async function handleFavoriteClick() {
+    const next = !favorited;
+    setFavorited(next);
+    await heartControls.start({
+      scale: [1, 1.5, 0.85, 1],
+      transition: { duration: 0.4, times: [0, 0.3, 0.7, 1] },
+    });
+  }
   function handleAddReview(r: typeof ALL_REVIEWS[0]) {
     setReviews((prev) => [r, ...prev]);
     setOwnReviewIds((prev) => new Set(prev).add(r.id));
@@ -879,11 +888,22 @@ export function ProductPage() {
                   iconSize={17}
                 />
               </div>
-              <button onClick={handleFavorite}
-                className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors"
-                style={{ background: "#fff" }}>
-                <Heart size={18} fill="none" stroke="#374957" strokeWidth={1.5} />
-              </button>
+              <motion.button
+                onClick={handleFavoriteClick}
+                animate={heartControls}
+                className="w-[50px] h-[50px] rounded-full border flex items-center justify-center transition-colors"
+                style={{
+                  borderColor: favorited ? "rgba(229,62,62,0.3)" : "rgba(55,73,87,0.2)",
+                  background: favorited ? "rgba(229,62,62,0.06)" : "#fff",
+                }}
+              >
+                <Heart
+                  size={18}
+                  fill={favorited ? "#e53e3e" : "none"}
+                  stroke={favorited ? "#e53e3e" : "#374957"}
+                  strokeWidth={1.5}
+                />
+              </motion.button>
               <button onClick={() => setShareModal(true)}
                 className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors bg-white">
                 <Share2 size={16} className="text-[#374957]" />
