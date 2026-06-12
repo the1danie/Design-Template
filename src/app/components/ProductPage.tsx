@@ -906,139 +906,177 @@ export function ProductPage() {
               ))}
             </div>
 
-            <p className="font-['Manrope',sans-serif] font-normal text-[14px] text-[rgba(0,0,0,0.6)] leading-[1.7] border-t border-[rgba(55,73,87,0.1)] pt-[20px]">
-              {details.description}
-            </p>
           </div>
         </div>
 
-        {/* ── Characteristics ── */}
-        <section className="mb-[64px]">
-          <h2 style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[28px] text-black mb-[24px]">Характеристики</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-[1px] bg-[rgba(55,73,87,0.08)] rounded-[20px] overflow-hidden">
-            {details.characteristics.map((c) => (
-              <div key={c.label} className="bg-[#fbfbf8] px-[24px] py-[18px]">
-                <p className="font-['Manrope',sans-serif] font-normal text-[12px] text-[#92887d] mb-[4px] uppercase tracking-wide">{c.label}</p>
-                <p className="font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957]">{c.value}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* ── Accordion sections ── */}
+        <div className="mb-[64px] bg-white rounded-[24px] border border-[rgba(55,73,87,0.08)] px-[32px]">
 
-        {/* ── Reviews ── */}
-        <section className="mb-[64px]" ref={reviewsRef}>
-          <div className="flex items-center justify-between mb-[28px]">
-            <h2 style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[28px] text-black">
-              Отзывы <span className="text-[#92887d] text-[22px]">({totalReviews})</span>
-            </h2>
-            <button onClick={() => setWriteReview(true)}
-              className="flex items-center gap-[8px] h-[42px] px-[20px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[13px] hover:bg-[#3c6460] transition-colors">
-              Написать отзыв
-            </button>
-          </div>
+          <AccordionItem title="Описание" defaultOpen>
+            <p className="font-['Manrope',sans-serif] font-normal text-[14px] text-[rgba(0,0,0,0.6)] leading-[1.7]">
+              {details.description}
+            </p>
+          </AccordionItem>
 
-          <div className="grid lg:grid-cols-[260px_1fr] gap-[40px]">
-            {/* Summary */}
-            <div className="bg-white rounded-[20px] p-[28px] border border-[rgba(55,73,87,0.08)] flex flex-col items-center gap-[20px] h-fit">
-              <div className="text-center">
-                <p className="font-['Manrope',sans-serif] font-bold text-[64px] text-black leading-none">{avgRating}</p>
-                <div className="flex justify-center mt-[8px]"><StarRow rating={+avgRating} size={20} /></div>
-                <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] mt-[6px]">{totalReviews} отзывов</p>
-              </div>
-
-              {/* Breakdown bars — clickable to filter */}
-              <div className="w-full flex flex-col gap-[8px]">
-                {ratingBreakdown.map(({ stars, count }) => {
-                  const pct = totalReviews ? Math.round((count / totalReviews) * 100) : 0;
-                  const active = reviewFilter === stars;
-                  return (
-                    <button key={stars}
-                      onClick={() => { setReviewFilter(active ? null : stars); setShowAllReviews(true); }}
-                      className="flex items-center gap-[8px] group rounded-[8px] px-[4px] py-[3px] -mx-[4px] transition-colors"
-                      style={{ background: active ? "rgba(49,83,80,0.07)" : "transparent" }}>
-                      <span className="font-['Manrope',sans-serif] text-[12px] w-[8px] shrink-0 transition-colors"
-                        style={{ color: active ? "#315350" : "#92887d" }}>{stars}</span>
-                      <Star size={11} fill={active ? "#315350" : "#FFC633"} stroke={active ? "#315350" : "#FFC633"} />
-                      <div className="flex-1 h-[6px] bg-[#f0ede8] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all"
-                          style={{ width: `${pct}%`, background: active ? "#315350" : "#FFC633" }} />
-                      </div>
-                      <span className="font-['Manrope',sans-serif] text-[12px] w-[24px] text-right shrink-0 transition-colors"
-                        style={{ color: active ? "#315350" : "#92887d" }}>{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {reviewFilter !== null && (
-                <button onClick={() => setReviewFilter(null)}
-                  className="w-full flex items-center justify-center gap-[6px] h-[36px] border border-[rgba(55,73,87,0.2)] rounded-full font-['Manrope',sans-serif] font-medium text-[12px] text-[#374957] hover:border-[#315350] hover:text-[#315350] transition-colors">
-                  <X size={12} /> Сбросить фильтр
-                </button>
-              )}
-            </div>
-
-            {/* Review list */}
-            <div className="flex flex-col gap-[14px]">
-              {/* Sort controls */}
-              <div className="flex items-center gap-[8px] flex-wrap">
-                <span className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#92887d]">Сортировать:</span>
-                {([
-                  { key: "newest", label: "Сначала новые" },
-                  { key: "best",   label: "Сначала лучшие" },
-                  { key: "worst",  label: "Сначала плохие" },
-                ] as const).map((opt) => (
-                  <button key={opt.key}
-                    onClick={() => setReviewSort(opt.key)}
-                    className="h-[32px] px-[14px] rounded-full font-['Manrope',sans-serif] font-medium text-[12px] transition-all border"
-                    style={reviewSort === opt.key
-                      ? { background: "#315350", color: "#fff", borderColor: "#315350" }
-                      : { background: "#fff", color: "#374957", borderColor: "rgba(55,73,87,0.18)" }}>
-                    {opt.label}
-                  </button>
-                ))}
-                {reviewFilter !== null && (
-                  <span className="font-['Manrope',sans-serif] text-[12px] text-[#315350] ml-auto">
-                    Показаны: {sortedFilteredReviews.length} из {totalReviews}
-                  </span>
-                )}
-              </div>
-
-              {sortedFilteredReviews.length === 0 ? (
-                <div className="bg-white rounded-[20px] p-[40px] border border-[rgba(55,73,87,0.08)] flex flex-col items-center gap-[10px]">
-                  <Star size={32} className="text-[#d8d0c8]" />
-                  <p className="font-['Manrope',sans-serif] font-medium text-[15px] text-[#374957]">Нет отзывов с такой оценкой</p>
-                  <button onClick={() => setReviewFilter(null)}
-                    className="font-['Manrope',sans-serif] text-[13px] text-[#315350] hover:underline">
-                    Показать все отзывы
-                  </button>
+          <AccordionItem title="Характеристики">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-[1px] bg-[rgba(55,73,87,0.08)] rounded-[20px] overflow-hidden">
+              {details.characteristics.map((c) => (
+                <div key={c.label} className="bg-[#fbfbf8] px-[24px] py-[18px]">
+                  <p className="font-['Manrope',sans-serif] font-normal text-[12px] text-[#92887d] mb-[4px] uppercase tracking-wide">{c.label}</p>
+                  <p className="font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957]">{c.value}</p>
                 </div>
-              ) : (
-              <>
-              {visibleReviews.map((r) => (
-                <ReviewCard
-                  key={r.id}
-                  review={r}
-                  isOwn={ownReviewIds.has(r.id)}
-                  onEdit={() => setEditingReview(r)}
-                  onDelete={() => handleDeleteReview(r.id)}
-                />
               ))}
-
-              {sortedFilteredReviews.length > 3 && (
-                <button onClick={() => setShowAllReviews(!showAllReviews)}
-                  className="flex items-center justify-center gap-[8px] h-[46px] border border-[rgba(55,73,87,0.2)] rounded-full font-['Manrope',sans-serif] font-medium text-[14px] text-[#374957] hover:border-[#315350] hover:text-[#315350] transition-colors bg-white">
-                  {showAllReviews
-                    ? <><ChevronUp size={16} /> Свернуть отзывы</>
-                    : <><ChevronDown size={16} /> Показать все {sortedFilteredReviews.length} отзывов</>
-                  }
-                </button>
-              )}
-              </>
-              )}
             </div>
+          </AccordionItem>
+
+          <AccordionItem title="Доставка">
+            <div className="flex flex-col gap-[14px]">
+              {([
+                { Icon: Truck,  title: "Бесплатная доставка",   desc: "По всему Казахстану при любой сумме заказа" },
+                { Icon: Clock,  title: "1–3 рабочих дня",        desc: "Курьер или самовывоз из пунктов выдачи KazPost" },
+                { Icon: Check,  title: "Отслеживание заказа",    desc: "Статус и трекинг доступны в личном кабинете" },
+              ] as const).map(({ Icon, title, desc }) => (
+                <div key={title} className="flex items-start gap-[14px]">
+                  <div className="w-[38px] h-[38px] rounded-full bg-[#f0f5f4] flex items-center justify-center shrink-0 mt-[1px]">
+                    <Icon size={16} color="#315350" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <p className="font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957]">{title}</p>
+                    <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d]">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AccordionItem>
+
+          <AccordionItem title="Возврат">
+            <div className="flex flex-col gap-[14px]">
+              {([
+                { Icon: RotateCcw, title: "Возврат в течение 14 дней",  desc: "С момента получения заказа" },
+                { Icon: Shield,    title: "Исходное состояние",          desc: "Товар без следов использования, в оригинальной упаковке" },
+                { Icon: Check,     title: "Деньги за 5 рабочих дней",   desc: "Возврат на карту после подтверждения получения" },
+              ] as const).map(({ Icon, title, desc }) => (
+                <div key={title} className="flex items-start gap-[14px]">
+                  <div className="w-[38px] h-[38px] rounded-full bg-[#f0f5f4] flex items-center justify-center shrink-0 mt-[1px]">
+                    <Icon size={16} color="#315350" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <p className="font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957]">{title}</p>
+                    <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d]">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AccordionItem>
+
+          <div ref={reviewsRef}>
+            <AccordionItem title={`Отзывы (${totalReviews})`}>
+              <div className="flex justify-end mb-[20px]">
+                <button
+                  onClick={() => setWriteReview(true)}
+                  className="flex items-center gap-[8px] h-[42px] px-[20px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[13px] hover:bg-[#3c6460] transition-colors"
+                >
+                  Написать отзыв
+                </button>
+              </div>
+              <div className="grid lg:grid-cols-[260px_1fr] gap-[40px]">
+                {/* Summary */}
+                <div className="bg-[#fbfbf8] rounded-[20px] p-[28px] border border-[rgba(55,73,87,0.08)] flex flex-col items-center gap-[20px] h-fit">
+                  <div className="text-center">
+                    <p className="font-['Manrope',sans-serif] font-bold text-[64px] text-black leading-none">{avgRating}</p>
+                    <div className="flex justify-center mt-[8px]"><StarRow rating={+avgRating} size={20} /></div>
+                    <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] mt-[6px]">{totalReviews} отзывов</p>
+                  </div>
+                  <div className="w-full flex flex-col gap-[8px]">
+                    {ratingBreakdown.map(({ stars, count }) => {
+                      const pct = totalReviews ? Math.round((count / totalReviews) * 100) : 0;
+                      const active = reviewFilter === stars;
+                      return (
+                        <button key={stars}
+                          onClick={() => { setReviewFilter(active ? null : stars); setShowAllReviews(true); }}
+                          className="flex items-center gap-[8px] group rounded-[8px] px-[4px] py-[3px] -mx-[4px] transition-colors"
+                          style={{ background: active ? "rgba(49,83,80,0.07)" : "transparent" }}>
+                          <span className="font-['Manrope',sans-serif] text-[12px] w-[8px] shrink-0 transition-colors"
+                            style={{ color: active ? "#315350" : "#92887d" }}>{stars}</span>
+                          <Star size={11} fill={active ? "#315350" : "#FFC633"} stroke={active ? "#315350" : "#FFC633"} />
+                          <div className="flex-1 h-[6px] bg-[#f0ede8] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, background: active ? "#315350" : "#FFC633" }} />
+                          </div>
+                          <span className="font-['Manrope',sans-serif] text-[12px] w-[24px] text-right shrink-0 transition-colors"
+                            style={{ color: active ? "#315350" : "#92887d" }}>{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {reviewFilter !== null && (
+                    <button onClick={() => setReviewFilter(null)}
+                      className="w-full flex items-center justify-center gap-[6px] h-[36px] border border-[rgba(55,73,87,0.2)] rounded-full font-['Manrope',sans-serif] font-medium text-[12px] text-[#374957] hover:border-[#315350] hover:text-[#315350] transition-colors">
+                      <X size={12} /> Сбросить фильтр
+                    </button>
+                  )}
+                </div>
+                {/* Review list */}
+                <div className="flex flex-col gap-[14px]">
+                  <div className="flex items-center gap-[8px] flex-wrap">
+                    <span className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#92887d]">Сортировать:</span>
+                    {([
+                      { key: "newest", label: "Сначала новые" },
+                      { key: "best",   label: "Сначала лучшие" },
+                      { key: "worst",  label: "Сначала плохие" },
+                    ] as const).map((opt) => (
+                      <button key={opt.key}
+                        onClick={() => setReviewSort(opt.key)}
+                        className="h-[32px] px-[14px] rounded-full font-['Manrope',sans-serif] font-medium text-[12px] transition-all border"
+                        style={reviewSort === opt.key
+                          ? { background: "#315350", color: "#fff", borderColor: "#315350" }
+                          : { background: "#fff", color: "#374957", borderColor: "rgba(55,73,87,0.18)" }}>
+                        {opt.label}
+                      </button>
+                    ))}
+                    {reviewFilter !== null && (
+                      <span className="font-['Manrope',sans-serif] text-[12px] text-[#315350] ml-auto">
+                        Показаны: {sortedFilteredReviews.length} из {totalReviews}
+                      </span>
+                    )}
+                  </div>
+                  {sortedFilteredReviews.length === 0 ? (
+                    <div className="bg-white rounded-[20px] p-[40px] border border-[rgba(55,73,87,0.08)] flex flex-col items-center gap-[10px]">
+                      <Star size={32} className="text-[#d8d0c8]" />
+                      <p className="font-['Manrope',sans-serif] font-medium text-[15px] text-[#374957]">Нет отзывов с такой оценкой</p>
+                      <button onClick={() => setReviewFilter(null)}
+                        className="font-['Manrope',sans-serif] text-[13px] text-[#315350] hover:underline">
+                        Показать все отзывы
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {visibleReviews.map((r) => (
+                        <ReviewCard
+                          key={r.id}
+                          review={r}
+                          isOwn={ownReviewIds.has(r.id)}
+                          onEdit={() => setEditingReview(r)}
+                          onDelete={() => handleDeleteReview(r.id)}
+                        />
+                      ))}
+                      {sortedFilteredReviews.length > 3 && (
+                        <button onClick={() => setShowAllReviews(!showAllReviews)}
+                          className="flex items-center justify-center gap-[8px] h-[46px] border border-[rgba(55,73,87,0.2)] rounded-full font-['Manrope',sans-serif] font-medium text-[14px] text-[#374957] hover:border-[#315350] hover:text-[#315350] transition-colors bg-white">
+                          {showAllReviews
+                            ? <><ChevronUp size={16} /> Свернуть отзывы</>
+                            : <><ChevronDown size={16} /> Показать все {sortedFilteredReviews.length} отзывов</>
+                          }
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </AccordionItem>
           </div>
-        </section>
+
+        </div>
 
         {/* ── About master ── */}
         <section className="mb-[64px]">
