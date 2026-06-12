@@ -1087,14 +1087,21 @@ export function ProductPage() {
                     </div>
                   ) : (
                     <>
-                      {visibleReviews.map((r) => (
-                        <ReviewCard
+                      {visibleReviews.map((r, index) => (
+                        <motion.div
                           key={r.id}
-                          review={r}
-                          isOwn={ownReviewIds.has(r.id)}
-                          onEdit={() => setEditingReview(r)}
-                          onDelete={() => handleDeleteReview(r.id)}
-                        />
+                          initial={{ opacity: 0, y: 24 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true, margin: "-60px" }}
+                          transition={{ duration: 0.4, ease: "easeOut", delay: index * 0.07 }}
+                        >
+                          <ReviewCard
+                            review={r}
+                            isOwn={ownReviewIds.has(r.id)}
+                            onEdit={() => setEditingReview(r)}
+                            onDelete={() => handleDeleteReview(r.id)}
+                          />
+                        </motion.div>
                       ))}
                       {sortedFilteredReviews.length > 3 && (
                         <button onClick={() => setShowAllReviews(!showAllReviews)}
