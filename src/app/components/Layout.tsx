@@ -141,7 +141,7 @@ export function Layout() {
                   )}
                 </div>
                 {/* Cart */}
-                <button onClick={() => navigate(authPath("cart"))} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Корзина">
+                <button id="cart-icon-btn" onClick={() => navigate(authPath("cart"))} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Корзина">
                   <svg className="absolute inset-0 size-full" fill="none" viewBox="0 0 20 20">
                     <path d={svgPaths.p3dd6fc00} fill="#374957" />
                   </svg>

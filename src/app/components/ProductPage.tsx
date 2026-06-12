@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { animate, motion, AnimatePresence, useMotionValue, useTransform, useAnimationControls } from "motion/react";
 import { useCart } from "../context/CartContext";
@@ -246,6 +247,38 @@ function BadgePill({ type }: { type: "Новинка" | "Хит" | "Топ ма�
   );
 }
 
+// ── Flying Image ─────────────────────────────────────────────────────────────
+
+type FlyPos = { startX: number; startY: number; endX: number; endY: number };
+
+function FlyingImage({ imgSrc, pos, onComplete }: {
+  imgSrc: string;
+  pos: FlyPos;
+  onComplete: () => void;
+}) {
+  return createPortal(
+    <motion.div
+      initial={{ x: pos.startX, y: pos.startY, scale: 1, opacity: 1, borderRadius: "8px" }}
+      animate={{ x: pos.endX, y: pos.endY, scale: 0.2, opacity: 0, borderRadius: "50%" }}
+      transition={{ duration: 0.65, ease: [0.2, 0, 0.8, 1] }}
+      onAnimationComplete={onComplete}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: 60,
+        height: 60,
+        zIndex: 9999,
+        overflow: "hidden",
+        pointerEvents: "none",
+      }}
+    >
+      <img src={imgSrc} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+    </motion.div>,
+    document.body
+  );
+}
+
 // ── Animated Cart Button ──────────────────────────────────────────────────────
 
 function AnimatedCartButton({
@@ -253,13 +286,18 @@ function AnimatedCartButton({
   className,
   iconSize = 17,
   stopPropagation = false,
+  imgSrc,
+  flyFromRef,
 }: {
   qty: number;
   className: string;
   iconSize?: number;
   stopPropagation?: boolean;
+  imgSrc?: string;
+  flyFromRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const [added, setAdded] = useState(false);
+  const [flyPos, setFlyPos] = useState<FlyPos | null>(null);
   const { addToCart } = useCart();
 
   function handleClick(e: React.MouseEvent) {
@@ -268,43 +306,66 @@ function AnimatedCartButton({
     setAdded(true);
     addToCart(qty);
     setTimeout(() => setAdded(false), 2000);
+
+    if (imgSrc && flyFromRef?.current) {
+      const from = flyFromRef.current.getBoundingClientRect();
+      const cartBtn = document.getElementById("cart-icon-btn");
+      if (cartBtn) {
+        const to = cartBtn.getBoundingClientRect();
+        setFlyPos({
+          startX: from.left + from.width / 2 - 30,
+          startY: from.top + from.height / 2 - 30,
+          endX: to.left + to.width / 2 - 10,
+          endY: to.top + to.height / 2 - 10,
+        });
+      }
+    }
   }
 
   return (
-    <motion.button
-      onClick={handleClick}
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-      className={`${className} overflow-hidden`}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {added ? (
-          <motion.span
-            key="added"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-            className="flex items-center gap-[8px]"
-          >
-            <Check size={iconSize} strokeWidth={2.5} />
-            Добавлено
-          </motion.span>
-        ) : (
-          <motion.span
-            key="cart"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-            className="flex items-center gap-[8px]"
-          >
-            <ShoppingCart size={iconSize} strokeWidth={2} />
-            В корзину
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </motion.button>
+    <>
+      <motion.button
+        onClick={handleClick}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        className={`${className} overflow-hidden`}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {added ? (
+            <motion.span
+              key="added"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-[8px]"
+            >
+              <Check size={iconSize} strokeWidth={2.5} />
+              Добавлено
+            </motion.span>
+          ) : (
+            <motion.span
+              key="cart"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-[8px]"
+            >
+              <ShoppingCart size={iconSize} strokeWidth={2} />
+              В корзину
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+      {flyPos && imgSrc && (
+        <FlyingImage
+          imgSrc={imgSrc}
+          pos={flyPos}
+          onComplete={() => setFlyPos(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -699,6 +760,7 @@ export function ProductPage() {
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : null;
 
   const [activeImg, setActiveImg] = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
   const [qty, setQty] = useState(1);
   const [favorited, setFavorited] = useState(false);
   const heartControls = useAnimationControls();
@@ -819,7 +881,7 @@ export function ProductPage() {
                 </button>
               ))}
             </div>
-            <div className="flex-1 bg-[#f0eeed] rounded-[24px] overflow-hidden relative aspect-square">
+            <div ref={galleryRef} className="flex-1 bg-[#f0eeed] rounded-[24px] overflow-hidden relative aspect-square">
               <img src={GALLERY[activeImg]} alt={product.name} className="md:hidden absolute inset-0 w-full h-full object-cover" />
               <ViewMagnifier maxScale={1.6} className="hidden md:block absolute inset-0">
                 <img src={GALLERY[activeImg]} alt={product.name} className="w-full h-full object-cover" />
@@ -886,6 +948,8 @@ export function ProductPage() {
                   qty={qty}
                   className="w-full h-[50px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[15px] text-white"
                   iconSize={17}
+                  imgSrc={GALLERY[activeImg]}
+                  flyFromRef={galleryRef}
                 />
               </div>
               <motion.button
