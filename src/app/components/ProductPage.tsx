@@ -1190,7 +1190,7 @@ export function ProductPage() {
               transition={{ type: "spring", stiffness: 380, damping: 36 }}
               className="fixed bottom-0 left-0 right-0 z-50 bg-[#fbfbf8]/95 backdrop-blur-md border-t border-[rgba(55,73,87,0.1)]"
             >
-              <div className="max-w-[1440px] mx-auto px-[80px] py-[14px] flex items-center gap-[20px]">
+              <div className="max-w-[1440px] mx-auto px-[16px] md:px-[40px] lg:px-[80px] py-[14px] flex items-center gap-[20px]">
                 <img
                   src={GALLERY[activeImg]}
                   alt=""
