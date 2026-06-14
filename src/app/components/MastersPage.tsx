@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { motion } from "motion/react";
 import {
   BadgeCheck, Star, Sparkles, Trophy, Flag,
-  ShoppingBag, Users, ChevronDown,
-  MapPin,
+  ShoppingBag, ChevronDown,
+  MapPin, Search, MessageCircle, X, Check,
 } from "lucide-react";
 import imgCat1 from "../../imports/Главная1/8b6bb52a3edf386cb865b41ec89559fc52b9ac8b.png";
 import imgCat2 from "../../imports/Главная1/bb11288ae7495004fa7935a2c8c92dfeb19e39c2.png";
@@ -12,6 +13,10 @@ import imgCat4 from "../../imports/Главная1/c82f907c58912fd52cfe2dafef2f9
 import imgCat5 from "../../imports/Главная1/1a127ff4aeda0ca697d11c7943256279991814e2.png";
 import imgCat6 from "../../imports/Главная1/24390a85724f954aa31bb0f87a83125f1714f165.png";
 import imgImage8 from "../../imports/Главная1/2f8c2d4769fcbe496b4559a5853a97d632a4eeaa.png";
+import imgMastersHero from "../../imports/custom-assets/masters-hero-blob-clean.png";
+import { PageBreadcrumb } from "./PageBreadcrumb";
+import { PageControlButton, PageControlGroup, SegmentedControl } from "./PageControls";
+import { PageHeader } from "./PageHeader";
 
 // ── Badge system ──────────────────────────────────────────────────────────────
 
@@ -21,11 +26,11 @@ const BADGE_CFG: Record<MBadge, {
   label: string; desc: string;
   Icon: React.ElementType; bg: string; text: string; border: string;
 }> = {
-  verified: { label: "Проверен Crafty",     desc: "Прошёл верификацию личности",          Icon: BadgeCheck, bg: "#EBF5EB", text: "#1E6B1E", border: "rgba(30,107,30,0.2)" },
-  top:      { label: "Топ-мастер",          desc: "Высокий рейтинг и много заказов",       Icon: Star,       bg: "#FFF8E8", text: "#92600A", border: "rgba(255,198,51,0.4)" },
-  choice:   { label: "Выбор покупателей",   desc: "Много заказов за последние 30 дней",    Icon: Trophy,     bg: "#FFF3EC", text: "#B84A00", border: "rgba(214,83,10,0.25)" },
+  verified: { label: "Проверен Crafty",     desc: "Документы и контакты проверены",        Icon: BadgeCheck, bg: "#EBF5EB", text: "#1E6B1E", border: "rgba(30,107,30,0.2)" },
+  top:      { label: "Топ-мастер",          desc: "Высокий рейтинг и продажи",             Icon: Star,       bg: "#FFF8E8", text: "#92600A", border: "rgba(255,198,51,0.4)" },
+  choice:   { label: "Выбор покупателей",   desc: "Лучшие отзывы за последние месяцы",     Icon: Trophy,     bg: "#FFF3EC", text: "#B84A00", border: "rgba(214,83,10,0.25)" },
   new:      { label: "Новый мастер",        desc: "Зарегистрирован недавно, < 10 продаж",  Icon: Sparkles,   bg: "#EEF6F5", text: "#315350", border: "rgba(49,83,80,0.2)" },
-  kazakh:   { label: "Казахстанский бренд", desc: "Локальное производство в Казахстане",   Icon: Flag,       bg: "#EEF2FE", text: "#2040A0", border: "rgba(32,64,160,0.2)" },
+  kazakh:   { label: "Казахстанский бренд", desc: "Производство в Казахстане",             Icon: Flag,       bg: "#EEF2FE", text: "#2040A0", border: "rgba(32,64,160,0.2)" },
 };
 
 function BadgePill({ type, tooltip = false }: { type: MBadge; tooltip?: boolean }) {
@@ -56,7 +61,8 @@ function BadgePill({ type, tooltip = false }: { type: MBadge; tooltip?: boolean 
 
 interface Master {
   id: string; name: string; cat: string; city: string;
-  rating: number; reviews: number; products: number; followers: number; since: string;
+  rating: number; reviews: number; products: number; sales: number; followers: number; since: string;
+  responseTime: string; responseRate: number;
   cover: string; avatar: string;
   bio: string; previews: string[];
   badges: MBadge[];
@@ -66,7 +72,8 @@ const MASTERS: Master[] = [
   {
     id: "silver-breeze",
     name: "Silver Breeze",          cat: "Украшения",          city: "Алматы",
-    rating: 5.0, reviews: 412, products: 64, followers: 3800, since: "2019",
+    rating: 5.0, reviews: 412, products: 64, sales: 532, followers: 3800, since: "2019",
+    responseTime: "в течение 2 часов", responseRate: 98,
     cover: "https://images.unsplash.com/photo-1522065893269-6fd20f6d7438?w=700&h=200&fit=crop&auto=format",
     avatar: imgImage8,
     bio: "Серебряные украшения с лазуритом, агатом и традиционными казахскими мотивами. Каждое изделие создаётся вручную.",
@@ -76,7 +83,8 @@ const MASTERS: Master[] = [
   {
     id: "candle-studio",
     name: "Candle Studio",          cat: "Свечи и ароматика",  city: "Алматы",
-    rating: 4.9, reviews: 341, products: 27, followers: 2100, since: "2020",
+    rating: 4.9, reviews: 341, products: 27, sales: 418, followers: 2100, since: "2020",
+    responseTime: "в течение 3 часов", responseRate: 96,
     cover: "https://images.unsplash.com/photo-1624479163091-3c000402218d?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat4,
     bio: "Соевые и восковые свечи с натуральными ароматами степных трав и цветов Казахстана.",
@@ -86,7 +94,8 @@ const MASTERS: Master[] = [
   {
     id: "clay-home",
     name: "Clay & Home",            cat: "Гончарство",         city: "Алматы",
-    rating: 4.9, reviews: 214, products: 38, followers: 1240, since: "2022",
+    rating: 4.9, reviews: 214, products: 38, sales: 286, followers: 1240, since: "2022",
+    responseTime: "в течение дня", responseRate: 94,
     cover: "https://images.unsplash.com/photo-1676125105332-608345abe20e?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat2,
     bio: "Авторская керамика и гончарные изделия, вдохновлённые казахской культурой и природой.",
@@ -96,7 +105,8 @@ const MASTERS: Master[] = [
   {
     id: "aizatman",
     name: "Aizatman Felt Studio",   cat: "Войлок и текстиль",  city: "Астана",
-    rating: 4.8, reviews: 178, products: 52, followers: 980, since: "2021",
+    rating: 4.8, reviews: 178, products: 52, sales: 241, followers: 980, since: "2021",
+    responseTime: "в течение 4 часов", responseRate: 95,
     cover: "https://images.unsplash.com/photo-1623578059518-bbdb071eab81?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat1,
     bio: "Войлочные изделия ручной работы: сырмаки, корпе, сумки с казахским орнаментом.",
@@ -106,7 +116,8 @@ const MASTERS: Master[] = [
   {
     id: "nurcraft",
     name: "NurCraft",               cat: "Казахское handmade", city: "Алматы",
-    rating: 4.9, reviews: 289, products: 56, followers: 2340, since: "2020",
+    rating: 4.9, reviews: 289, products: 56, sales: 364, followers: 2340, since: "2020",
+    responseTime: "в течение 2 часов", responseRate: 97,
     cover: "https://images.unsplash.com/photo-1762628727567-250080e7e9a3?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat3,
     bio: "Традиционные казахские сувениры, войлочные изделия и национальная одежда на заказ.",
@@ -116,7 +127,8 @@ const MASTERS: Master[] = [
   {
     id: "leather-agentin",
     name: "Leather by Agentin",     cat: "Кожаные изделия",    city: "Алматы",
-    rating: 4.8, reviews: 157, products: 43, followers: 1560, since: "2021",
+    rating: 4.8, reviews: 157, products: 43, sales: 219, followers: 1560, since: "2021",
+    responseTime: "в течение дня", responseRate: 92,
     cover: "https://images.unsplash.com/photo-1609619742069-f5e18afeef17?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat6,
     bio: "Натуральная кожа: сумки, ремни, кошельки с казахским тиснением и орнаментами.",
@@ -126,7 +138,8 @@ const MASTERS: Master[] = [
   {
     id: "craftylan",
     name: "CraftyLan",              cat: "Декор и живопись",   city: "Шымкент",
-    rating: 4.7, reviews: 96,  products: 31, followers: 670, since: "2023",
+    rating: 4.7, reviews: 96,  products: 31, sales: 124, followers: 670, since: "2023",
+    responseTime: "в течение 5 часов", responseRate: 91,
     cover: "https://images.unsplash.com/photo-1598495494482-172d89ff078c?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat5,
     bio: "Акварели, постеры и авторский декор — казахстанские пейзажи в современном стиле.",
@@ -136,7 +149,8 @@ const MASTERS: Master[] = [
   {
     id: "felt-tales",
     name: "Felt & Tales",           cat: "Игрушки",            city: "Астана",
-    rating: 4.8, reviews: 203, products: 48, followers: 1890, since: "2024",
+    rating: 4.8, reviews: 203, products: 48, sales: 267, followers: 1890, since: "2024",
+    responseTime: "в течение 3 часов", responseRate: 95,
     cover: "https://images.unsplash.com/photo-1676125105159-517d135a6cc3?w=700&h=200&fit=crop&auto=format",
     avatar: imgCat5,
     bio: "Войлочные игрушки и развивающие наборы для детей, вдохновлённые казахскими сказками.",
@@ -147,6 +161,7 @@ const MASTERS: Master[] = [
 
 const CITIES = ["Все города", "Алматы", "Астана", "Шымкент", "Караганда", "Тараз"];
 const SPECIALIZATIONS = ["Все специализации", ...Array.from(new Set(MASTERS.map((m) => m.cat)))];
+const CITY_TABS = ["Алматы", "Астана", "Шымкент", "Павлодар"];
 const SORT_TABS = [
   { key: "all",     label: "Все мастера" },
   { key: "top",     label: "Топ-мастера" },
@@ -155,18 +170,143 @@ const SORT_TABS = [
   { key: "popular", label: "По популярности" },
 ];
 
+// ── Ask master modal ──────────────────────────────────────────────────────────
+
+function AskMasterModal({ masterName, masterAvatar, onClose }: {
+  masterName: string;
+  masterAvatar: string;
+  onClose: () => void;
+}) {
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const MIN = 5;
+  const MAX = 500;
+  const canSend = text.trim().length >= MIN;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-[16px]"
+      style={{ background: "rgba(0,0,0,0.48)" }}
+      onClick={sent ? onClose : undefined}
+    >
+      <div
+        className="bg-white rounded-[24px] w-full max-w-[460px] shadow-[0_24px_60px_rgba(0,0,0,0.18)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-[24px] pt-[22px] pb-[16px] border-b border-[rgba(55,73,87,0.08)]">
+          <div className="flex items-center gap-[10px]">
+            <div className="w-[32px] h-[32px] bg-[#eef3ef] rounded-full flex items-center justify-center">
+              <MessageCircle size={15} className="text-[#315350]" />
+            </div>
+            <p style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[18px] text-black">
+              Написать мастеру
+            </p>
+          </div>
+          <button type="button" onClick={onClose}
+            className="w-[32px] h-[32px] rounded-full hover:bg-[#f5f3ed] flex items-center justify-center transition-colors">
+            <X size={16} className="text-[#374957]" />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="flex flex-col items-center text-center px-[24px] py-[40px]">
+            <div className="w-[64px] h-[64px] bg-[#eef3ef] rounded-full flex items-center justify-center mb-[16px]">
+              <Check size={28} className="text-[#315350]" />
+            </div>
+            <p className="font-['Manrope',sans-serif] font-bold text-[17px] text-black mb-[8px]">Сообщение отправлено!</p>
+            <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] leading-[1.7] mb-[6px]">
+              Мастер <span className="font-semibold text-[#374957]">{masterName}</span> получит уведомление и ответит в ближайшее время.
+            </p>
+            <p className="font-['Manrope',sans-serif] text-[12px] text-[#b0a89e] mb-[28px]">Ответ придёт на ваш email</p>
+            <button type="button" onClick={onClose}
+              className="h-[44px] px-[28px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] hover:bg-[#3c6460] transition-colors">
+              Хорошо
+            </button>
+          </div>
+        ) : (
+          <div className="px-[24px] py-[20px]">
+            <div className="flex items-center gap-[12px] mb-[18px] p-[12px] bg-[#fafaf8] rounded-[14px]">
+              <img src={masterAvatar} alt={masterName}
+                className="w-[42px] h-[42px] rounded-full object-cover border border-[rgba(55,73,87,0.1)] shrink-0" />
+              <div className="min-w-0">
+                <p className="font-['Manrope',sans-serif] font-bold text-[13px] text-black truncate">{masterName}</p>
+                <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mt-[2px]">Проверенный мастер Crafty</p>
+              </div>
+            </div>
+
+            <div className="mb-[16px]">
+              <label className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957] block mb-[6px]">
+                Ваше сообщение
+              </label>
+              <textarea
+                autoFocus
+                value={text}
+                onChange={(e) => setText(e.target.value.slice(0, MAX))}
+                placeholder="Например: Можно ли сделать на заказ? Какие сроки изготовления?"
+                rows={4}
+                className="w-full rounded-[14px] border border-[rgba(55,73,87,0.16)] px-[14px] py-[12px] font-['Manrope',sans-serif] text-[14px] text-[#374957] placeholder:text-[#b0a89e] outline-none focus:border-[#315350] resize-none transition-colors"
+              />
+              <div className="flex items-center justify-between mt-[4px]">
+                {text.trim().length > 0 && text.trim().length < MIN
+                  ? <p className="font-['Manrope',sans-serif] text-[11px] text-[#dc2626]">Минимум {MIN} символов</p>
+                  : <span />
+                }
+                <p className="font-['Manrope',sans-serif] text-[11px] text-[#b0a89e] ml-auto">{text.length}/{MAX}</p>
+              </div>
+            </div>
+
+            <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mb-[16px] leading-[1.6]">
+              Ответ придёт на вашу почту. Обычно мастер отвечает в течение 24 часов.
+            </p>
+
+            <div className="flex gap-[10px]">
+              <button type="button" onClick={onClose}
+                className="flex-1 h-[46px] rounded-full border border-[rgba(55,73,87,0.18)] font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957] hover:border-[#374957] transition-colors">
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => setSent(true)}
+                disabled={!canSend}
+                className="flex-1 h-[46px] rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] text-white transition-all flex items-center justify-center gap-[8px]"
+                style={{
+                  background: canSend ? "#315350" : "#d0c8bf",
+                  cursor: canSend ? "pointer" : "not-allowed",
+                }}
+              >
+                <MessageCircle size={15} />
+                Отправить
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Master card ───────────────────────────────────────────────────────────────
 
-function MasterCard({ master, onShopClick }: {
+function MasterCard({ master, onShopClick, onAsk }: {
   master: Master;
   onShopClick: () => void;
+  onAsk: () => void;
 }) {
+  const navigate = useNavigate();
+
   return (
-    <div className="bg-white rounded-[24px] overflow-hidden border border-[rgba(55,73,87,0.08)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.1)] transition-shadow duration-300 flex flex-col">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="group bg-white rounded-[24px] overflow-hidden border border-[rgba(55,73,87,0.08)] hover:shadow-[0_12px_34px_rgba(0,0,0,0.12)] transition-shadow duration-300 flex flex-col h-full min-h-[580px]"
+    >
 
       {/* Cover */}
       <div className="relative h-[128px] overflow-hidden bg-[#f0eeed] shrink-0">
-        <img src={master.cover} alt={master.name} className="w-full h-full object-cover" />
+        <img src={master.cover} alt={master.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
 
         {/* City */}
@@ -185,14 +325,14 @@ function MasterCard({ master, onShopClick }: {
       <div className="pt-[32px] px-[18px] pb-[18px] flex flex-col flex-1">
 
         {/* Name */}
-        <div className="flex items-start justify-between gap-2 mb-[6px]">
+        <div className="flex items-start justify-between gap-2 mb-[6px] min-h-[42px]">
           <div>
             <div className="flex items-center gap-[5px]">
               <p style={{ fontFamily: "'Playfair Display', serif" }}
-                className="font-bold text-[16px] text-black leading-tight">{master.name}</p>
+                className="font-bold text-[16px] text-black leading-tight line-clamp-1">{master.name}</p>
               <BadgeCheck size={14} className="text-[#315350] shrink-0" />
             </div>
-            <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mt-[1px]">{master.cat}</p>
+            <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mt-[1px] line-clamp-1">{master.cat}</p>
           </div>
         </div>
 
@@ -211,32 +351,49 @@ function MasterCard({ master, onShopClick }: {
         </div>
 
         {/* Badges */}
-        <div className="flex flex-wrap gap-[5px] mb-[10px]">
+        <div className="flex flex-wrap content-start gap-[5px] mb-[10px] min-h-[50px]">
           {master.badges.map((b) => <BadgePill key={b} type={b} tooltip />)}
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-[16px] mb-[10px] pb-[10px] border-b border-[rgba(55,73,87,0.07)]">
+        <div className="grid grid-cols-[auto_auto_1fr] items-center gap-x-[12px] gap-y-[5px] mb-[10px] pb-[10px] border-b border-[rgba(55,73,87,0.07)] min-h-[58px]">
           <div className="flex items-center gap-[4px]">
             <ShoppingBag size={12} className="text-[#92887d]" />
             <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-black">{master.products}</span>
             <span className="font-['Manrope',sans-serif] text-[11px] text-[#92887d]">товаров</span>
           </div>
           <div className="flex items-center gap-[4px]">
-            <Users size={12} className="text-[#92887d]" />
-            <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-black">{master.followers.toLocaleString("ru-RU")}</span>
-            <span className="font-['Manrope',sans-serif] text-[11px] text-[#92887d]">подписч.</span>
+            <BadgeCheck size={12} className="text-[#92887d]" />
+            <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-black">{master.sales}</span>
+            <span className="font-['Manrope',sans-serif] text-[11px] text-[#92887d]">продаж</span>
           </div>
-          <span className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] ml-auto">с {master.since}</span>
+          <div className="flex items-center gap-[4px]">
+            <Star size={12} className="text-[#92887d]" />
+            <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-black">{master.reviews}</span>
+            <span className="font-['Manrope',sans-serif] text-[11px] text-[#92887d]">отзывов</span>
+          </div>
+          <span className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] col-start-3 justify-self-end">с {master.since}</span>
+        </div>
+
+        <div className="flex items-start gap-[7px] bg-[#f7faf9] border border-[rgba(49,83,80,0.08)] rounded-[14px] px-[10px] py-[8px] mb-[10px] min-h-[72px]">
+          <MessageCircle size={14} className="text-[#315350] shrink-0 mt-[1px]" />
+          <div>
+            <p className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957] leading-tight">
+              Отвечает {master.responseTime}
+            </p>
+            <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mt-[2px]">
+              {master.responseRate}% ответов на сообщения
+            </p>
+          </div>
         </div>
 
         {/* Bio */}
-        <p className="font-['Manrope',sans-serif] text-[12px] text-[rgba(0,0,0,0.5)] leading-[1.5] mb-[10px] line-clamp-2 flex-1">
+        <p className="font-['Manrope',sans-serif] text-[12px] text-[rgba(0,0,0,0.5)] leading-[1.5] mb-[10px] line-clamp-2 min-h-[36px]">
           {master.bio}
         </p>
 
         {/* Previews + link */}
-        <div className="flex items-center gap-[5px] justify-between mt-auto">
+        <div className="flex items-center gap-[10px] justify-between mt-auto min-h-[42px]">
           <div className="flex gap-[5px]">
             {master.previews.map((img, i) => (
               <div key={i} className="w-[42px] h-[42px] rounded-[9px] overflow-hidden bg-[#f0eeed]">
@@ -244,13 +401,24 @@ function MasterCard({ master, onShopClick }: {
               </div>
             ))}
           </div>
-          <button onClick={onShopClick}
-            className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#315350] hover:underline whitespace-nowrap">
-            В магазин →
-          </button>
+          <div className="flex items-center gap-[10px] shrink-0">
+            <button
+              type="button"
+              onClick={onAsk}
+              className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#92887d] hover:text-[#315350] transition-colors whitespace-nowrap"
+            >
+              Написать
+            </button>
+            <button
+              type="button"
+              onClick={onShopClick}
+              className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#315350] hover:underline whitespace-nowrap">
+              В магазин →
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -270,9 +438,27 @@ function BadgeLegend() {
       </button>
       {open && (
         <div className="mt-[10px] bg-white rounded-[20px] border border-[rgba(55,73,87,0.08)] px-[18px] py-[14px]">
-          <div className="flex flex-wrap gap-[8px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[12px]">
             {(Object.keys(BADGE_CFG) as MBadge[]).map((k) => (
-              <BadgePill key={k} type={k} tooltip />
+              <div key={k} className="flex items-start gap-[9px]">
+                <div
+                  className="size-[28px] rounded-full border flex items-center justify-center shrink-0"
+                  style={{ background: BADGE_CFG[k].bg, borderColor: BADGE_CFG[k].border }}
+                >
+                  {(() => {
+                    const Icon = BADGE_CFG[k].Icon;
+                    return <Icon size={13} style={{ color: BADGE_CFG[k].text }} strokeWidth={2} />;
+                  })()}
+                </div>
+                <div>
+                  <p className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957]">
+                    {BADGE_CFG[k].label}
+                  </p>
+                  <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] leading-[1.4] mt-[2px]">
+                    {BADGE_CFG[k].desc}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -289,114 +475,119 @@ export function MastersPage() {
   const [city, setCity] = useState("Все города");
   const [specialization, setSpecialization] = useState("Все специализации");
   const [cityOpen, setCityOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [askMaster, setAskMaster] = useState<Master | null>(null);
 
   const filtered = MASTERS
     .filter((m) => city === "Все города" || m.city === city)
     .filter((m) => specialization === "Все специализации" || m.cat === specialization)
+    .filter((m) => {
+      const normalizedQuery = query.trim().toLowerCase();
+      if (!normalizedQuery) return true;
+      return [m.name, m.cat, m.city, m.bio].join(" ").toLowerCase().includes(normalizedQuery);
+    })
     .filter((m) => {
       if (sort === "top")    return m.badges.includes("top");
       if (sort === "choice") return m.badges.includes("choice");
       if (sort === "new")    return m.badges.includes("new");
       return true;
     })
-    .sort((a, b) => sort === "popular" ? b.followers - a.followers : 0);
+    .sort((a, b) => sort === "popular" ? b.reviews - a.reviews : 0);
 
-  return (
+  return (<>
     <div className="bg-[#fbfbf8] min-h-screen">
       <div className="max-w-[1440px] mx-auto px-[80px] py-[36px]">
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-[6px] mb-[28px]">
-          <button onClick={() => navigate("/")}
-            className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#92887d] hover:text-[#315350] transition-colors">
-            Главная
-          </button>
-          <span className="text-[#c5bdb5]">/</span>
-          <span className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957]">Проверенные мастера</span>
-        </nav>
+        <PageBreadcrumb
+          items={[
+            { label: "Главная", path: "/" },
+            { label: "Проверенные мастера" },
+          ]}
+        />
 
-        {/* Hero */}
-        <div className="grid lg:grid-cols-[1fr_280px] gap-[40px] items-center mb-[36px]">
-          <div>
-            <div className="flex items-center gap-[10px] mb-[10px]">
-              <h1 style={{ fontFamily: "'Playfair Display', serif" }}
-                className="font-bold text-[38px] text-black leading-none">
-                Проверенные мастера
-              </h1>
-              <BadgeCheck size={26} className="text-[#315350]" />
-            </div>
-            <p className="font-['Manrope',sans-serif] text-[14px] text-[rgba(0,0,0,0.55)] leading-[1.65] max-w-[540px] mb-[24px]">
-              Каждый мастер проходит верификацию личности и качества товаров администрацией Crafty.kz.
-              Мы гарантируем подлинность изделий и добросовестность каждого продавца.
-            </p>
-            <div className="flex items-center gap-[18px]">
-              {[
-                { Icon: BadgeCheck,  value: "50+",     label: "Проверенных мастеров" },
-                { Icon: ShoppingBag, value: "500+",    label: "Товаров в каталоге" },
-                { Icon: Star,        value: "4.9",     label: "Средний рейтинг" },
-                { Icon: Users,       value: "10 000+", label: "Покупателей" },
-              ].map(({ Icon, value, label }) => (
-                <div key={label} className="flex items-start gap-[7px]">
-                  <div className="w-[28px] h-[28px] bg-[#f0f5f4] rounded-full flex items-center justify-center shrink-0 mt-[1px]">
-                    <Icon size={14} className="text-[#315350]" />
-                  </div>
-                  <div>
-                    <p className="font-['Manrope',sans-serif] font-bold text-[16px] text-black leading-none">{value}</p>
-                    <p className="font-['Manrope',sans-serif] text-[10px] text-[#92887d] mt-[2px]">{label}</p>
-                  </div>
+        <PageHeader
+          title="Проверенные мастера"
+          description="Каждый мастер проходит верификацию личности и качества товаров администрацией Crafty.kz. Мы гарантируем подлинность изделий и добросовестность каждого продавца."
+          actions={
+            <>
+              <PageControlButton onClick={() => navigate("/catalog")}>
+                <ShoppingBag size={14} />
+                В магазин
+              </PageControlButton>
+              <PageControlButton onClick={() => navigate("/apply")} active>
+                Стать мастером →
+              </PageControlButton>
+            </>
+          }
+          stats={[
+            { value: "50+", label: "мастеров" },
+            { value: "500+", label: "товаров" },
+            { value: "4.9", label: "средний рейтинг" },
+            { value: "10 000+", label: "покупателей" },
+          ]}
+          visual={
+            <div className="relative hidden xl:block w-[500px] h-[328px]">
+              <img
+                src={imgMastersHero}
+                alt="Мастер держит керамическое изделие"
+                className="absolute inset-0 w-full h-full object-contain"
+                style={{
+                  filter: "drop-shadow(0 28px 42px rgba(49, 83, 80, 0.16))",
+                }}
+              />
+
+              <div className="absolute right-[12px] bottom-[14px] bg-white rounded-[20px] shadow-[0_18px_44px_rgba(49,83,80,0.18)] border border-[rgba(55,73,87,0.08)] px-[16px] py-[13px] flex items-start gap-[11px]">
+                <div className="size-[34px] rounded-full bg-[#ebf5eb] flex items-center justify-center shrink-0">
+                  <BadgeCheck size={17} className="text-[#315350]" />
                 </div>
-              ))}
+                <div>
+                  <p className="font-['Manrope',sans-serif] font-bold text-[14px] text-[#374957] leading-tight">
+                    Все мастера проверены
+                  </p>
+                  <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d] mt-[4px] whitespace-nowrap">
+                    Покупайте с уверенностью
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="hidden lg:block relative h-[170px] rounded-[24px] overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1676125105332-608345abe20e?w=600&h=260&fit=crop&auto=format"
-              alt="" className="w-full h-full object-cover" />
-            <div className="absolute bottom-[12px] right-[12px] bg-white/90 backdrop-blur-sm rounded-[12px] px-[12px] py-[8px] flex items-center gap-[6px]">
-              <BadgeCheck size={14} className="text-[#315350]" />
-              <span className="font-['Manrope',sans-serif] font-semibold text-[11px] text-[#374957]">Все верифицированы</span>
-            </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Badge legend */}
         <BadgeLegend />
 
         {/* Filters */}
         <div className="flex items-center justify-between mb-[16px] gap-4 flex-wrap">
-          <div className="flex items-center gap-[4px] bg-white border border-[rgba(55,73,87,0.1)] rounded-full p-[4px]">
+          <SegmentedControl>
             {SORT_TABS.map((t) => (
               <button key={t.key} onClick={() => setSort(t.key)}
-                className="h-[32px] px-[14px] rounded-full font-['Manrope',sans-serif] font-medium text-[12px] transition-all whitespace-nowrap"
+                className="h-[30px] px-[12px] rounded-full font-['Manrope',sans-serif] font-medium text-[13px] transition-all whitespace-nowrap"
                 style={sort === t.key
                   ? { background: "#315350", color: "#fff" }
                   : { color: "#374957" }}>
                 {t.label}
               </button>
             ))}
-          </div>
+          </SegmentedControl>
 
-          <div className="flex items-center gap-[8px] overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <PageControlGroup className="overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             {SPECIALIZATIONS.map((item) => (
-              <button
+              <PageControlButton
                 key={item}
                 onClick={() => setSpecialization(item)}
-                className="h-[34px] px-[13px] rounded-full border font-['Manrope',sans-serif] font-medium text-[12px] whitespace-nowrap transition-colors"
-                style={specialization === item
-                  ? { background: "#315350", borderColor: "#315350", color: "#fff" }
-                  : { background: "#fff", borderColor: "rgba(55,73,87,0.16)", color: "#374957" }}
+                active={specialization === item}
               >
                 {item}
-              </button>
+              </PageControlButton>
             ))}
-          </div>
+          </PageControlGroup>
         </div>
 
         <div className="flex items-center justify-between mb-[20px] gap-4 flex-wrap">
           <div className="relative">
             <button onClick={() => setCityOpen(!cityOpen)}
-              className="flex items-center gap-[6px] h-[40px] px-[16px] border border-[rgba(55,73,87,0.15)] bg-white rounded-full font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] hover:border-[#315350] transition-colors">
+              className="flex items-center gap-[7px] h-[36px] px-[14px] border border-[rgba(55,73,87,0.16)] bg-white rounded-full font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] hover:border-[#315350] transition-colors">
               <MapPin size={13} className="text-[#315350]" />
               {city}
               <ChevronDown size={12} className={`transition-transform ${cityOpen ? "rotate-180" : ""}`} />
@@ -413,6 +604,31 @@ export function MastersPage() {
               </div>
             )}
           </div>
+
+          <PageControlGroup>
+            {CITY_TABS.map((item) => {
+              const count = MASTERS.filter((master) => master.city === item).length;
+              return (
+                <PageControlButton
+                  key={item}
+                  onClick={() => setCity(city === item ? "Все города" : item)}
+                  active={city === item}
+                >
+                  {item} ({count})
+                </PageControlButton>
+              );
+            })}
+          </PageControlGroup>
+        </div>
+
+        <div className="relative mb-[20px] max-w-[420px]">
+          <Search size={15} className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[#92887d]" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Найти мастера..."
+            className="w-full h-[42px] rounded-full border border-[rgba(55,73,87,0.16)] bg-white pl-[40px] pr-[16px] font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] placeholder:text-[#92887d] outline-none focus:border-[#315350] transition-colors"
+          />
         </div>
 
         {/* Count */}
@@ -425,7 +641,7 @@ export function MastersPage() {
           <div className="flex flex-col items-center gap-[12px] py-[80px]">
             <BadgeCheck size={40} className="text-[#d8d0c8]" />
             <p className="font-['Manrope',sans-serif] font-medium text-[15px] text-[#374957]">Мастера не найдены</p>
-            <button onClick={() => { setSort("all"); setCity("Все города"); setSpecialization("Все специализации"); }}
+            <button onClick={() => { setSort("all"); setCity("Все города"); setSpecialization("Все специализации"); setQuery(""); }}
               className="font-['Manrope',sans-serif] text-[13px] text-[#315350] hover:underline">
               Сбросить фильтры
             </button>
@@ -436,7 +652,8 @@ export function MastersPage() {
               <MasterCard
                 key={m.id}
                 master={m}
-                onShopClick={() => navigate(`/catalog/ukrasheniya`)}
+                onShopClick={() => navigate(`/shop/${m.id}`)}
+                onAsk={() => setAskMaster(m)}
               />
             ))}
           </div>
@@ -459,5 +676,14 @@ export function MastersPage() {
 
       </div>
     </div>
+
+    {askMaster && (
+      <AskMasterModal
+        masterName={askMaster.name}
+        masterAvatar={askMaster.avatar}
+        onClose={() => setAskMaster(null)}
+      />
+    )}
+  </>
   );
 }

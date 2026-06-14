@@ -1,12 +1,14 @@
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { PackageCheck } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import svgPaths from "../../imports/Главная1/svg-7zpnau8iqv";
 import imgImage6 from "../../imports/Главная1/dc67fbdd930fca6bb6a68a7e5753725209c1c5f6.png";
 
 const NAV_LINKS = [
   { label: "Все категории",       path: "/catalog" },
+  { label: "Новинки",             path: "/new" },
   { label: "Подборки",            path: "/collections" },
   { label: "Проверенные мастера", path: "/masters" },
 ];
@@ -21,6 +23,7 @@ export function Layout() {
   const [search, setSearch] = useState("");
   const [language, setLanguage] = useState(LANGUAGES[1]);
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { cartCount } = useCart();
@@ -60,13 +63,13 @@ export function Layout() {
       <header className="bg-[#fbfbf8] border-b border-[rgba(55,73,87,0.1)]">
         {/* Top row */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-[#fbfbf8] border-b border-[rgba(55,73,87,0.08)]">
-          <div className="max-w-[1440px] mx-auto px-[83px] py-[18px] flex items-center gap-[42px]">
+          <div className="max-w-[1440px] mx-auto px-[56px] py-[18px] flex items-center gap-[28px]">
             {/* Logo + nav links */}
-            <div className="flex items-center gap-[40px] shrink-0">
-              <button onClick={() => navigate("/")} className="w-[120px] h-[40px] flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-[30px] shrink-0">
+              <button onClick={() => navigate("/")} className="w-[112px] h-[40px] flex items-center justify-center shrink-0">
                 <img src={imgImage6} alt="Crafty.kz" className="w-full h-full object-contain mix-blend-darken" />
               </button>
-              <div className="flex items-end gap-[32px]">
+              <div className="flex items-end gap-[24px]">
                 {NAV_LINKS.map((l) => {
                   const active = l.path.startsWith("/#")
                     ? location.hash === l.path.slice(1)
@@ -75,13 +78,16 @@ export function Layout() {
                     <button
                       key={l.label}
                       onClick={() => handleNav(l.path)}
-                      className="relative font-['Manrope',sans-serif] font-medium text-[16px] whitespace-nowrap transition-colors leading-normal pb-[2px]"
-                      style={{ color: active ? "#315350" : "#374957" }}
+                      onMouseEnter={() => setHoveredNav(l.path)}
+                      onMouseLeave={() => setHoveredNav(null)}
+                      className="relative font-['Manrope',sans-serif] font-medium text-[15px] whitespace-nowrap transition-colors leading-normal pb-[2px]"
+                      style={{ color: active || hoveredNav === l.path ? "#315350" : "#374957" }}
                     >
                       {l.label}
-                      {active && (
-                        <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#315350]" />
-                      )}
+                      <span
+                        className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#315350] origin-left transition-transform duration-200"
+                        style={{ transform: active || hoveredNav === l.path ? "scaleX(1)" : "scaleX(0)" }}
+                      />
                     </button>
                   );
                 })}
@@ -89,9 +95,9 @@ export function Layout() {
             </div>
 
             {/* Search + icons */}
-            <div className="flex items-center gap-[36px] ml-auto shrink-0">
+            <div className="flex items-center gap-[24px] ml-auto flex-1 min-w-0 justify-end">
               {/* Search */}
-              <div className="bg-[#f5f3ed] flex items-center gap-[12px] px-[16px] py-[12px] rounded-[62px] w-[413px]">
+              <div className="bg-[#f5f3ed] flex items-center gap-[12px] px-[16px] py-[12px] rounded-[62px] w-full max-w-[380px] min-w-[260px]">
                 <svg className="shrink-0 size-[24px]" fill="none" viewBox="0 0 24 24">
                   <path d={svgPaths.pc71b800} fill="#92887D" />
                 </svg>
@@ -100,12 +106,12 @@ export function Layout() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Найти украшения, текстиль, керамику"
-                  className="bg-transparent flex-1 outline-none font-['Manrope',sans-serif] font-medium text-[16px] text-[#374957] placeholder:text-[#92887d]"
+                  className="bg-transparent flex-1 min-w-0 outline-none font-['Manrope',sans-serif] font-medium text-[15px] text-[#374957] placeholder:text-[#92887d]"
                 />
               </div>
 
               {/* Right icons */}
-              <div className="flex items-center gap-[28px]">
+              <div className="flex items-center gap-[22px] shrink-0">
                 {/* Language */}
                 <div className="relative">
                   <button
@@ -141,7 +147,7 @@ export function Layout() {
                   )}
                 </div>
                 {/* Cart */}
-                <button id="cart-icon-btn" onClick={() => navigate(authPath("cart"))} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Корзина">
+                <button id="cart-icon-btn" onClick={() => navigate("/cart")} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Корзина">
                   <svg className="absolute inset-0 size-full" fill="none" viewBox="0 0 20 20">
                     <path d={svgPaths.p3dd6fc00} fill="#374957" />
                   </svg>
@@ -157,17 +163,21 @@ export function Layout() {
                     </motion.span>
                   )}
                 </button>
+                {/* Orders */}
+                <button onClick={() => navigate("/profile/orders")} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Мои заказы">
+                  <PackageCheck size={20} className="text-[#374957]" />
+                </button>
                 {/* Heart */}
-                <button onClick={() => navigate(authPath("favorite"))} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Избранное">
+                <button onClick={() => navigate("/profile/favorites")} className="relative size-[20px] hover:opacity-70 transition-opacity" aria-label="Избранное">
                   <svg className="absolute inset-0 size-full" fill="none" viewBox="0 0 20 20">
                     <path d={svgPaths.p3b2d5980} fill="#374957" />
                   </svg>
                 </button>
                 {/* Sign in */}
                 <button
-                  onClick={() => navigate(authPath())}
+                  onClick={() => navigate("/profile")}
                   className="flex items-center justify-center hover:opacity-70 transition-opacity"
-                  aria-label="Войти"
+                  aria-label="Мой профиль"
                 >
                   <div className="rotate-180 size-[20px] relative">
                     <svg className="absolute inset-0 size-full" fill="none" viewBox="0 0 20 20">

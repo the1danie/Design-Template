@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router";
 import { animate, motion, AnimatePresence, useMotionValue, useTransform, useAnimationControls } from "motion/react";
 import { useCart } from "../context/CartContext";
 import {
-  ChevronRight, Heart, ShoppingCart, Truck, Shield, RotateCcw,
+  ChevronRight, Flag, Heart, MessageCircle, ShoppingCart, Truck, Shield, RotateCcw,
   Star, Flame, Sparkles, Share2, ChevronLeft, X, Copy, Check,
   LogIn, Eye, EyeOff, ImagePlus, ChevronDown, ChevronUp, BadgeCheck, Clock,
   Pencil, Trash2, Search,
@@ -17,6 +17,7 @@ import imgCat3 from "../../imports/Главная1/6d5ed20763f358f3424ba01ed14de
 import imgCat4 from "../../imports/Главная1/c82f907c58912fd52cfe2dafef2f9a8fd97803c0.png";
 import imgCat5 from "../../imports/Главная1/1a127ff4aeda0ca697d11c7943256279991814e2.png";
 import { CATEGORY_MAP, DEFAULT_CATEGORY } from "../catalogData";
+import { PageBreadcrumb } from "./PageBreadcrumb";
 
 // ── Static data ───────────────────────────────────────────────────────────────
 
@@ -133,6 +134,26 @@ function getProductDetails(category: string, name: string): ProductDetails {
         { label: "Вес",           value: "780 г" },
         { label: "Уход",          value: "Деликатная чистка" },
         { label: "Орнамент",      value: "Казахский мотив" },
+        { label: "Страна",        value: "Казахстан" },
+        { label: "Ручная работа", value: "Да" },
+      ],
+    };
+  }
+
+  if (lower.includes("ваза") || lower.includes("чайник") || lower.includes("кружк")) {
+    return {
+      subcategory: "Керамика",
+      description: "Керамическое изделие ручной работы, созданное на гончарном круге и расписанное вручную. Каждый предмет уникален — рисунок и фактура неповторимы.",
+      stock: "Нет в наличии",
+      productionTime: "Изготовление: 7-14 дней",
+      masterBio: "Гончар с 8-летним опытом. Работает с местной казахстанской глиной, соединяя традиционные техники с современным дизайном.",
+      characteristics: [
+        { label: "Материал",      value: "Обожжённая глина" },
+        { label: "Покрытие",      value: "Безопасная глазурь" },
+        { label: "Высота",        value: "24 см" },
+        { label: "Объем",         value: "1.2 л" },
+        { label: "Уход",          value: "Ручная мойка" },
+        { label: "Роспись",       value: "Ручная" },
         { label: "Страна",        value: "Казахстан" },
         { label: "Ручная работа", value: "Да" },
       ],
@@ -288,6 +309,7 @@ function AnimatedCartButton({
   stopPropagation = false,
   imgSrc,
   flyFromRef,
+  itemData,
 }: {
   qty: number;
   className: string;
@@ -295,6 +317,7 @@ function AnimatedCartButton({
   stopPropagation?: boolean;
   imgSrc?: string;
   flyFromRef?: React.RefObject<HTMLDivElement | null>;
+  itemData?: { id: string; title: string; price: number; img: string; master: string };
 }) {
   const [added, setAdded] = useState(false);
   const [flyPos, setFlyPos] = useState<FlyPos | null>(null);
@@ -304,7 +327,11 @@ function AnimatedCartButton({
     if (stopPropagation) e.stopPropagation();
     if (added) return;
     setAdded(true);
-    addToCart(qty);
+    if (itemData) {
+      addToCart({ ...itemData, qty });
+    } else {
+      addToCart({ id: `unknown-${Date.now()}`, title: "Товар", price: 0, img: "", master: "", qty });
+    }
     setTimeout(() => setAdded(false), 2000);
 
     if (imgSrc && flyFromRef?.current) {
@@ -493,6 +520,370 @@ function ShareModal({ onClose, title }: { onClose: () => void; title: string }) 
             {copied ? "Скопировано" : "Копировать"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Report Modal ──────────────────────────────────────────────────────────────
+
+const REPORT_REASONS = [
+  { id: "not_handmade",   label: "Товар не является handmade",          desc: "Выглядит как фабричное или массовое производство" },
+  { id: "photo_mismatch", label: "Фото не совпадают с товаром",         desc: "Реальный товар отличается от изображений на странице" },
+  { id: "mass_produced",  label: "Похоже на массовое производство",     desc: "Одинаковые фото у нескольких продавцов или стоковые снимки" },
+  { id: "other",          label: "Другое",                              desc: "Опишите проблему в поле ниже" },
+] as const;
+
+type ReportReasonId = typeof REPORT_REASONS[number]["id"];
+
+function ReportModal({ title, onClose }: { title: string; onClose: () => void }) {
+  const [selected, setSelected] = useState<ReportReasonId | null>(null);
+  const [comment, setComment] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const canSubmit = selected !== null && (selected !== "other" || comment.trim().length > 0);
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    setSubmitted(true);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-[16px]"
+      style={{ background: "rgba(0,0,0,0.48)" }}
+      onClick={submitted ? onClose : undefined}
+    >
+      <div
+        className="bg-white rounded-[24px] w-full max-w-[460px] shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-[24px] pt-[22px] pb-[18px] border-b border-[rgba(55,73,87,0.08)]">
+          <div className="flex items-center gap-[10px]">
+            <div className="w-[32px] h-[32px] bg-[#fef2f2] rounded-full flex items-center justify-center">
+              <Flag size={14} className="text-[#dc2626]" />
+            </div>
+            <p style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[19px] text-black">
+              {submitted ? "Жалоба отправлена" : "Пожаловаться на листинг"}
+            </p>
+          </div>
+          <button type="button" onClick={onClose}
+            className="w-[32px] h-[32px] rounded-full hover:bg-[#f5f3ed] flex items-center justify-center transition-colors">
+            <X size={16} className="text-[#374957]" />
+          </button>
+        </div>
+
+        {submitted ? (
+          /* ── Success state ── */
+          <div className="flex flex-col items-center text-center px-[24px] py-[40px]">
+            <div className="w-[64px] h-[64px] bg-[#fef2f2] rounded-full flex items-center justify-center mb-[16px]">
+              <Check size={28} className="text-[#dc2626]" />
+            </div>
+            <p className="font-['Manrope',sans-serif] font-bold text-[16px] text-black mb-[8px]">Жалоба принята</p>
+            <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] leading-[1.7] mb-[24px] max-w-[300px]">
+              Наша команда рассмотрит обращение в течение 2–3 рабочих дней. Спасибо, что помогаете поддерживать качество на Crafty.kz.
+            </p>
+            <button type="button" onClick={onClose}
+              className="h-[44px] px-[28px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] hover:bg-[#3c6460] transition-colors">
+              Закрыть
+            </button>
+          </div>
+        ) : (
+          <div className="px-[24px] py-[20px]">
+            {/* Product name */}
+            <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d] mb-[16px] line-clamp-1">
+              Листинг: <span className="font-semibold text-[#374957]">{title}</span>
+            </p>
+
+            {/* Reason list */}
+            <div className="flex flex-col gap-[8px] mb-[16px]">
+              {REPORT_REASONS.map((reason) => {
+                const active = selected === reason.id;
+                return (
+                  <button
+                    key={reason.id}
+                    type="button"
+                    onClick={() => setSelected(reason.id)}
+                    className="flex items-start gap-[12px] px-[14px] py-[12px] rounded-[14px] border-[1.5px] text-left transition-all"
+                    style={{
+                      borderColor: active ? "#dc2626" : "rgba(55,73,87,0.14)",
+                      background: active ? "#fff8f8" : "#fafaf8",
+                    }}
+                  >
+                    {/* Radio dot */}
+                    <div className="mt-[2px] w-[16px] h-[16px] rounded-full border-[2px] flex items-center justify-center shrink-0 transition-all"
+                      style={{ borderColor: active ? "#dc2626" : "#d0c8bf" }}>
+                      {active && <div className="w-[7px] h-[7px] rounded-full bg-[#dc2626]" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-['Manrope',sans-serif] font-semibold text-[13px]"
+                        style={{ color: active ? "#dc2626" : "#374957" }}>
+                        {reason.label}
+                      </p>
+                      <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mt-[2px]">
+                        {reason.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Comment field (always shown for "other", optional hint otherwise) */}
+            {selected === "other" && (
+              <div className="mb-[16px]">
+                <label className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957] block mb-[6px]">
+                  Опишите проблему <span className="text-[#dc2626]">*</span>
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Расскажите подробнее…"
+                  rows={3}
+                  className="w-full rounded-[12px] border border-[rgba(55,73,87,0.16)] px-[12px] py-[10px] font-['Manrope',sans-serif] text-[13px] text-[#374957] placeholder:text-[#b0a89e] outline-none focus:border-[#dc2626] resize-none transition-colors"
+                />
+              </div>
+            )}
+
+            {selected && selected !== "other" && (
+              <div className="mb-[16px]">
+                <label className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957] block mb-[6px]">
+                  Дополнительный комментарий <span className="text-[#92887d] font-normal">(необязательно)</span>
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Любые детали, которые помогут модератору…"
+                  rows={2}
+                  className="w-full rounded-[12px] border border-[rgba(55,73,87,0.16)] px-[12px] py-[10px] font-['Manrope',sans-serif] text-[13px] text-[#374957] placeholder:text-[#b0a89e] outline-none focus:border-[#315350] resize-none transition-colors"
+                />
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center gap-[10px]">
+              <button type="button" onClick={onClose}
+                className="flex-1 h-[46px] rounded-full border border-[rgba(55,73,87,0.18)] font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957] hover:border-[#374957] transition-colors">
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                className="flex-1 h-[46px] rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] text-white transition-all"
+                style={{
+                  background: canSubmit ? "#dc2626" : "#e8e5e0",
+                  color: canSubmit ? "white" : "#92887d",
+                  cursor: canSubmit ? "pointer" : "not-allowed",
+                }}
+              >
+                Отправить жалобу
+              </button>
+            </div>
+
+            <p className="font-['Manrope',sans-serif] text-[11px] text-[#b0a89e] text-center mt-[12px]">
+              Жалоба рассматривается в течение 2–3 рабочих дней
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Ask Master Modal ──────────────────────────────────────────────────────────
+
+function AskMasterModal({ productTitle, masterName, masterImg, onClose }: {
+  productTitle: string;
+  masterName: string;
+  masterImg: string;
+  onClose: () => void;
+}) {
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const MIN = 5;
+  const MAX = 500;
+  const canSend = text.trim().length >= MIN;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-[16px]"
+      style={{ background: "rgba(0,0,0,0.48)" }}
+      onClick={sent ? onClose : undefined}
+    >
+      <div
+        className="bg-white rounded-[24px] w-full max-w-[460px] shadow-[0_24px_60px_rgba(0,0,0,0.18)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-[24px] pt-[22px] pb-[16px] border-b border-[rgba(55,73,87,0.08)]">
+          <div className="flex items-center gap-[10px]">
+            <div className="w-[32px] h-[32px] bg-[#eef3ef] rounded-full flex items-center justify-center">
+              <MessageCircle size={15} className="text-[#315350]" />
+            </div>
+            <p style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[18px] text-black">
+              Задать вопрос мастеру
+            </p>
+          </div>
+          <button type="button" onClick={onClose}
+            className="w-[32px] h-[32px] rounded-full hover:bg-[#f5f3ed] flex items-center justify-center transition-colors">
+            <X size={16} className="text-[#374957]" />
+          </button>
+        </div>
+
+        {sent ? (
+          /* ── Success ── */
+          <div className="flex flex-col items-center text-center px-[24px] py-[40px]">
+            <div className="w-[64px] h-[64px] bg-[#eef3ef] rounded-full flex items-center justify-center mb-[16px]">
+              <Check size={28} className="text-[#315350]" />
+            </div>
+            <p className="font-['Manrope',sans-serif] font-bold text-[17px] text-black mb-[8px]">Вопрос отправлен!</p>
+            <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] leading-[1.7] mb-[6px]">
+              Мастер <span className="font-semibold text-[#374957]">{masterName}</span> получит уведомление и ответит в ближайшее время.
+            </p>
+            <p className="font-['Manrope',sans-serif] text-[12px] text-[#b0a89e] mb-[28px]">Ответ придёт на ваш email</p>
+            <button type="button" onClick={onClose}
+              className="h-[44px] px-[28px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] hover:bg-[#3c6460] transition-colors">
+              Хорошо
+            </button>
+          </div>
+        ) : (
+          <div className="px-[24px] py-[20px]">
+            {/* Master info */}
+            <div className="flex items-center gap-[12px] mb-[18px] p-[12px] bg-[#fafaf8] rounded-[14px]">
+              <img src={masterImg} alt={masterName}
+                className="w-[42px] h-[42px] rounded-full object-cover border border-[rgba(55,73,87,0.1)] shrink-0" />
+              <div className="min-w-0">
+                <p className="font-['Manrope',sans-serif] font-bold text-[13px] text-black truncate">{masterName}</p>
+                <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mt-[2px] truncate">По товару: {productTitle}</p>
+              </div>
+            </div>
+
+            {/* Question textarea */}
+            <div className="mb-[16px]">
+              <label className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957] block mb-[6px]">
+                Ваш вопрос
+              </label>
+              <textarea
+                autoFocus
+                value={text}
+                onChange={(e) => setText(e.target.value.slice(0, MAX))}
+                placeholder="Например: Можно ли сделать в другом цвете? Каков реальный размер?"
+                rows={4}
+                className="w-full rounded-[14px] border border-[rgba(55,73,87,0.16)] px-[14px] py-[12px] font-['Manrope',sans-serif] text-[14px] text-[#374957] placeholder:text-[#b0a89e] outline-none focus:border-[#315350] resize-none transition-colors"
+              />
+              <div className="flex items-center justify-between mt-[4px]">
+                {text.trim().length > 0 && text.trim().length < MIN
+                  ? <p className="font-['Manrope',sans-serif] text-[11px] text-[#dc2626]">Минимум {MIN} символов</p>
+                  : <span />
+                }
+                <p className="font-['Manrope',sans-serif] text-[11px] text-[#b0a89e] ml-auto">{text.length}/{MAX}</p>
+              </div>
+            </div>
+
+            {/* Hint */}
+            <p className="font-['Manrope',sans-serif] text-[11px] text-[#92887d] mb-[16px] leading-[1.6]">
+              Ответ придёт на вашу почту. Обычно мастер отвечает в течение 24 часов.
+            </p>
+
+            {/* Actions */}
+            <div className="flex gap-[10px]">
+              <button type="button" onClick={onClose}
+                className="flex-1 h-[46px] rounded-full border border-[rgba(55,73,87,0.18)] font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957] hover:border-[#374957] transition-colors">
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => setSent(true)}
+                disabled={!canSend}
+                className="flex-1 h-[46px] rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] text-white transition-all flex items-center justify-center gap-[8px]"
+                style={{
+                  background: canSend ? "#315350" : "#d0c8bf",
+                  cursor: canSend ? "pointer" : "not-allowed",
+                }}
+              >
+                <MessageCircle size={15} />
+                Отправить
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Notify Modal (out of stock) ───────────────────────────────────────────────
+
+function NotifyModal({ productTitle, onClose }: { productTitle: string; onClose: () => void }) {
+  const [contact, setContact] = useState("");
+  const [sent, setSent] = useState(false);
+  const valid = contact.trim().length >= 5;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-[16px]"
+      style={{ background: "rgba(0,0,0,0.48)" }}
+      onClick={sent ? onClose : undefined}
+    >
+      <div
+        className="bg-white rounded-[24px] w-full max-w-[420px] shadow-[0_24px_60px_rgba(0,0,0,0.18)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-[24px] pt-[22px] pb-[16px] border-b border-[rgba(55,73,87,0.08)]">
+          <p style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[18px] text-black">
+            Уведомить о поступлении
+          </p>
+          <button type="button" onClick={onClose}
+            className="w-[32px] h-[32px] rounded-full hover:bg-[#f5f3ed] flex items-center justify-center transition-colors">
+            <X size={16} className="text-[#374957]" />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="flex flex-col items-center text-center px-[24px] py-[40px]">
+            <div className="w-[64px] h-[64px] bg-[#eef3ef] rounded-full flex items-center justify-center mb-[16px]">
+              <Check size={28} className="text-[#315350]" />
+            </div>
+            <p className="font-['Manrope',sans-serif] font-bold text-[17px] text-black mb-[8px]">Вы подписались!</p>
+            <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] leading-[1.7] mb-[28px] max-w-[280px]">
+              Как только товар появится, мы сразу пришлём уведомление.
+            </p>
+            <button type="button" onClick={onClose}
+              className="h-[44px] px-[28px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] hover:bg-[#3c6460] transition-colors">
+              Хорошо
+            </button>
+          </div>
+        ) : (
+          <div className="px-[24px] py-[20px]">
+            <p className="font-['Manrope',sans-serif] text-[13px] text-[#92887d] mb-[18px] leading-[1.6]">
+              Товар <span className="font-semibold text-[#374957]">«{productTitle}»</span> сейчас недоступен. Оставьте email или телефон — уведомим, когда появится.
+            </p>
+            <div className="mb-[8px]">
+              <label className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957] block mb-[6px]">Email или телефон</label>
+              <input
+                autoFocus
+                type="text"
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                placeholder="example@mail.com или +7 700…"
+                className="w-full h-[46px] rounded-[12px] border border-[rgba(55,73,87,0.16)] px-[14px] font-['Manrope',sans-serif] text-[14px] text-[#374957] placeholder:text-[#b0a89e] outline-none focus:border-[#315350] transition-colors"
+              />
+            </div>
+            <div className="flex gap-[10px] mt-[16px]">
+              <button type="button" onClick={onClose}
+                className="flex-1 h-[46px] rounded-full border border-[rgba(55,73,87,0.18)] font-['Manrope',sans-serif] font-semibold text-[14px] text-[#374957] hover:border-[#374957] transition-colors">
+                Отмена
+              </button>
+              <button type="button" onClick={() => setSent(true)} disabled={!valid}
+                className="flex-1 h-[46px] rounded-full font-['Manrope',sans-serif] font-semibold text-[14px] text-white transition-all"
+                style={{ background: valid ? "#315350" : "#d0c8bf", cursor: valid ? "pointer" : "not-allowed" }}>
+                Уведомить меня
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -759,14 +1150,29 @@ export function ProductPage() {
   const details = getProductDetails(category, product.name);
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : null;
 
+  const availability: "in_stock" | "made_to_order" | "out_of_stock" =
+    details.stock === "Нет в наличии" ? "out_of_stock"
+    : details.stock.toLowerCase().includes("под заказ") ? "made_to_order"
+    : "in_stock";
+
+  // Extract qty count from stock string like "Осталось 3 шт."
+  const stockQty = availability === "in_stock"
+    ? parseInt(details.stock.replace(/\D/g, "") || "99")
+    : null;
+  const lowStock = stockQty !== null && stockQty <= 5;
+
   const [activeImg, setActiveImg] = useState(0);
   const galleryRef = useRef<HTMLDivElement>(null);
   const [qty, setQty] = useState(1);
+  const totalPrice = product.price * qty;
   const [favorited, setFavorited] = useState(false);
   const heartControls = useAnimationControls();
 
   // Modals
   const [shareModal, setShareModal] = useState(false);
+  const [reportModal, setReportModal] = useState(false);
+  const [askModal, setAskModal] = useState(false);
+  const [notifyModal, setNotifyModal] = useState(false);
   const [writeReview, setWriteReview] = useState(false);
   const [editingReview, setEditingReview] = useState<typeof ALL_REVIEWS[0] | null>(null);
 
@@ -838,6 +1244,9 @@ export function ProductPage() {
     <div className="bg-[#fbfbf8] min-h-screen">
       {/* Modals */}
       {shareModal && <ShareModal title={product.name} onClose={() => setShareModal(false)} />}
+      {reportModal && <ReportModal title={product.name} onClose={() => setReportModal(false)} />}
+      {askModal && <AskMasterModal productTitle={product.name} masterName={product.master} masterImg={GALLERY[0]} onClose={() => setAskModal(false)} />}
+      {notifyModal && <NotifyModal productTitle={product.name} onClose={() => setNotifyModal(false)} />}
       {writeReview && <ReviewFormModal onClose={() => setWriteReview(false)} onSubmit={handleAddReview} />}
       {editingReview && (
         <ReviewFormModal
@@ -849,23 +1258,16 @@ export function ProductPage() {
 
       <div className="max-w-[1440px] mx-auto px-[80px] py-[32px]">
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-[6px] mb-8">
-          {[
+        <PageBreadcrumb
+          items={[
             { label: "Главная", path: "/" },
+            { label: "Каталог", path: "/catalog" },
             { label: config.title, path: `/catalog/${category}` },
             { label: details.subcategory, path: `/catalog/${category}` },
-            { label: product.name, path: null },
-          ].map((b, i, arr) => (
-            <span key={i} className="flex items-center gap-[6px]">
-              {b.path
-                ? <button onClick={() => navigate(b.path!)} className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#92887d] hover:text-[#315350] transition-colors max-w-[200px] truncate">{b.label}</button>
-                : <span className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] max-w-[260px] truncate">{b.label}</span>
-              }
-              {i < arr.length - 1 && <ChevronRight size={12} className="text-[#c5bdb5] shrink-0" />}
-            </span>
-          ))}
-        </nav>
+            { label: product.name },
+          ]}
+          className="mb-8"
+        />
 
         {/* ── Product block ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-[60px] mb-[64px]">
@@ -934,64 +1336,162 @@ export function ProductPage() {
               )}
             </div>
 
-            {/* Qty + actions */}
-            <div className="flex items-center gap-[12px] mb-[16px]">
-              <div className="flex items-center border border-[rgba(55,73,87,0.2)] rounded-full overflow-hidden">
-                <button onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-[44px] h-[50px] flex items-center justify-center text-[#374957] hover:bg-[#f5f3ed] transition-colors font-['Manrope',sans-serif] text-[20px]">−</button>
-                <span className="w-[40px] text-center font-['Manrope',sans-serif] font-semibold text-[16px] text-black">{qty}</span>
-                <button onClick={() => setQty(qty + 1)}
-                  className="w-[44px] h-[50px] flex items-center justify-center text-[#374957] hover:bg-[#f5f3ed] transition-colors font-['Manrope',sans-serif] text-[20px]">+</button>
-              </div>
-              <div ref={cartButtonRef} className="flex-1">
-                <AnimatedCartButton
-                  qty={qty}
-                  className="w-full h-[50px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[15px] text-white"
-                  iconSize={17}
-                  imgSrc={GALLERY[activeImg]}
-                  flyFromRef={galleryRef}
-                />
-              </div>
-              <motion.button
-                onClick={handleFavoriteClick}
-                animate={heartControls}
-                className="w-[50px] h-[50px] rounded-full border flex items-center justify-center transition-colors"
-                style={{
-                  borderColor: favorited ? "rgba(229,62,62,0.3)" : "rgba(55,73,87,0.2)",
-                  background: favorited ? "rgba(229,62,62,0.06)" : "#fff",
-                }}
-              >
-                <Heart
-                  size={18}
-                  fill={favorited ? "#e53e3e" : "none"}
-                  stroke={favorited ? "#e53e3e" : "#374957"}
-                  strokeWidth={1.5}
-                />
-              </motion.button>
-              <button onClick={() => setShareModal(true)}
-                className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors bg-white">
-                <Share2 size={16} className="text-[#374957]" />
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-[8px] mb-[14px]">
-              <div className="h-[34px] px-[13px] rounded-full bg-[#f0f5f4] flex items-center gap-[6px]">
-                <Check size={13} className="text-[#315350]" />
-                <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#315350]">{details.stock}</span>
-              </div>
+            {/* Stock + production pills */}
+            <div className="flex flex-wrap gap-[8px] mb-[18px]">
+              {/* Availability pill */}
+              {availability === "in_stock" && (
+                <div className="h-[34px] px-[13px] rounded-full flex items-center gap-[6px]"
+                  style={{ background: lowStock ? "#fff7e6" : "#f0f5f4" }}>
+                  <Check size={13} style={{ color: lowStock ? "#b45309" : "#315350" }} />
+                  <span className="font-['Manrope',sans-serif] font-semibold text-[12px]"
+                    style={{ color: lowStock ? "#b45309" : "#315350" }}>
+                    {details.stock}
+                  </span>
+                </div>
+              )}
+              {availability === "made_to_order" && (
+                <div className="h-[34px] px-[13px] rounded-full bg-[#e6f0ff] flex items-center gap-[6px]">
+                  <Clock size={13} className="text-[#1d5abf]" />
+                  <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#1d5abf]">Под заказ</span>
+                </div>
+              )}
+              {availability === "out_of_stock" && (
+                <div className="h-[34px] px-[13px] rounded-full bg-[#fef2f2] flex items-center gap-[6px]">
+                  <X size={13} className="text-[#dc2626]" />
+                  <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#dc2626]">Нет в наличии</span>
+                </div>
+              )}
+              {/* Production time */}
               <div className="h-[34px] px-[13px] rounded-full bg-[#f5f3ed] flex items-center gap-[6px]">
                 <Clock size={13} className="text-[#92887d]" />
                 <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#374957]">{details.productionTime}</span>
               </div>
             </div>
 
-            <button onClick={() => navigate(`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}${location.hash}`)}`)}
-              className="w-fit mb-[22px] font-['Manrope',sans-serif] font-semibold text-[13px] text-[#315350] hover:underline">
+            {/* Qty + actions */}
+            <div className="mb-[16px]">
+              {availability === "in_stock" && (
+                <>
+                  <p className="font-['Manrope',sans-serif] font-semibold text-[13px] text-[#374957] mb-[8px]">Количество</p>
+                  <div className="flex items-center gap-[12px]">
+                    <div className="flex items-center border border-[rgba(55,73,87,0.2)] rounded-full overflow-hidden">
+                      <button onClick={() => setQty(Math.max(1, qty - 1))}
+                        className="w-[44px] h-[50px] flex items-center justify-center text-[#374957] hover:bg-[#f5f3ed] transition-colors font-['Manrope',sans-serif] text-[20px]">−</button>
+                      <span className="w-[40px] text-center font-['Manrope',sans-serif] font-semibold text-[16px] text-black">{qty}</span>
+                      <button onClick={() => setQty(qty + 1)}
+                        className="w-[44px] h-[50px] flex items-center justify-center text-[#374957] hover:bg-[#f5f3ed] transition-colors font-['Manrope',sans-serif] text-[20px]">+</button>
+                    </div>
+                    <div ref={cartButtonRef} className="flex-1">
+                      <AnimatedCartButton
+                        qty={qty}
+                        className="w-full h-[50px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[15px] text-white"
+                        iconSize={17}
+                        imgSrc={GALLERY[activeImg]}
+                        flyFromRef={galleryRef}
+                        itemData={{ id: `${category}-${product.id}`, title: product.name, price: product.price, img: GALLERY[0], master: product.master }}
+                      />
+                    </div>
+                    <motion.button onClick={handleFavoriteClick} animate={heartControls}
+                      className="w-[50px] h-[50px] rounded-full border flex items-center justify-center transition-colors"
+                      style={{ borderColor: favorited ? "rgba(229,62,62,0.3)" : "rgba(55,73,87,0.2)", background: favorited ? "rgba(229,62,62,0.06)" : "#fff" }}>
+                      <Heart size={18} fill={favorited ? "#e53e3e" : "none"} stroke={favorited ? "#e53e3e" : "#374957"} strokeWidth={1.5} />
+                    </motion.button>
+                    <button onClick={() => setShareModal(true)}
+                      className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors bg-white">
+                      <Share2 size={16} className="text-[#374957]" />
+                    </button>
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {qty > 1 && (
+                      <motion.div key="total" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.18 }} className="mt-[12px] flex items-baseline gap-[8px] font-['Manrope',sans-serif]">
+                        <span className="font-semibold text-[13px] text-[#92887d]">Итого:</span>
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span key={totalPrice} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.16 }} className="font-bold text-[20px] text-[#315350]">
+                            {totalPrice.toLocaleString("ru-RU")} ₸
+                          </motion.span>
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
+
+              {availability === "made_to_order" && (
+                <div className="space-y-[10px]">
+                  <div ref={cartButtonRef} className="flex items-center gap-[12px]">
+                    <button
+                      type="button"
+                      onClick={() => setAskModal(true)}
+                      className="flex-1 h-[50px] rounded-full bg-[#1d5abf] hover:bg-[#1a4fa3] transition-colors font-['Manrope',sans-serif] font-semibold text-[15px] text-white flex items-center justify-center gap-[8px]"
+                    >
+                      <MessageCircle size={17} />
+                      Заказать у мастера
+                    </button>
+                    <motion.button onClick={handleFavoriteClick} animate={heartControls}
+                      className="w-[50px] h-[50px] rounded-full border flex items-center justify-center transition-colors"
+                      style={{ borderColor: favorited ? "rgba(229,62,62,0.3)" : "rgba(55,73,87,0.2)", background: favorited ? "rgba(229,62,62,0.06)" : "#fff" }}>
+                      <Heart size={18} fill={favorited ? "#e53e3e" : "none"} stroke={favorited ? "#e53e3e" : "#374957"} strokeWidth={1.5} />
+                    </motion.button>
+                    <button onClick={() => setShareModal(true)}
+                      className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors bg-white">
+                      <Share2 size={16} className="text-[#374957]" />
+                    </button>
+                  </div>
+                  <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d]">
+                    Мастер изготовит специально для вас — уточните детали в переписке.
+                  </p>
+                </div>
+              )}
+
+              {availability === "out_of_stock" && (
+                <div className="space-y-[10px]">
+                  <div ref={cartButtonRef} className="flex items-center gap-[12px]">
+                    <button
+                      type="button"
+                      disabled
+                      className="flex-1 h-[50px] rounded-full bg-[#e8e5e0] font-['Manrope',sans-serif] font-semibold text-[15px] text-[#92887d] flex items-center justify-center gap-[8px] cursor-not-allowed"
+                    >
+                      <ShoppingCart size={17} />
+                      Товар недоступен
+                    </button>
+                    <motion.button onClick={handleFavoriteClick} animate={heartControls}
+                      className="w-[50px] h-[50px] rounded-full border flex items-center justify-center transition-colors"
+                      style={{ borderColor: favorited ? "rgba(229,62,62,0.3)" : "rgba(55,73,87,0.2)", background: favorited ? "rgba(229,62,62,0.06)" : "#fff" }}>
+                      <Heart size={18} fill={favorited ? "#e53e3e" : "none"} stroke={favorited ? "#e53e3e" : "#374957"} strokeWidth={1.5} />
+                    </motion.button>
+                    <button onClick={() => setShareModal(true)}
+                      className="w-[50px] h-[50px] rounded-full border border-[rgba(55,73,87,0.2)] flex items-center justify-center hover:border-[#315350] transition-colors bg-white">
+                      <Share2 size={16} className="text-[#374957]" />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNotifyModal(true)}
+                    className="w-full h-[46px] rounded-full border-2 border-[#315350] font-['Manrope',sans-serif] font-semibold text-[14px] text-[#315350] hover:bg-[#f0f5f4] transition-colors flex items-center justify-center gap-[8px]"
+                  >
+                    <Check size={16} />
+                    Уведомить о поступлении
+                  </button>
+                  <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d] text-center">
+                    Мастер может изготовить повторно — уточните через «Задать вопрос»
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setAskModal(true)}
+              className="w-fit mb-[22px] flex items-center gap-[7px] font-['Manrope',sans-serif] font-semibold text-[13px] text-[#315350] hover:text-[#3c6460] transition-colors group"
+            >
+              <MessageCircle size={15} className="group-hover:scale-110 transition-transform" />
               Задать вопрос мастеру
             </button>
 
             {/* Guarantees */}
-            <div className="flex flex-col gap-[10px] mt-[4px] mb-[28px]">
+            <div className="flex flex-col gap-[10px] mt-[4px] mb-[20px]">
               {[
                 { Icon: Truck,     text: "Бесплатная доставка по Казахстану" },
                 { Icon: Shield,    text: "Гарантия качества и возврата 14 дней" },
@@ -1005,6 +1505,18 @@ export function ProductPage() {
                 </div>
               ))}
             </div>
+
+            {/* Report listing */}
+            <button
+              type="button"
+              onClick={() => setReportModal(true)}
+              className="flex items-center gap-[6px] mb-[28px] text-[#b0a89e] hover:text-[#dc2626] transition-colors group"
+            >
+              <Flag size={12} className="shrink-0 group-hover:text-[#dc2626] transition-colors" />
+              <span className="font-['Manrope',sans-serif] text-[12px] underline underline-offset-2 decoration-dotted">
+                Пожаловаться на листинг
+              </span>
+            </button>
 
           </div>
         </div>
@@ -1264,6 +1776,7 @@ export function ProductPage() {
                     className="w-full h-[38px] bg-[#315350] rounded-full font-['Manrope',sans-serif] font-medium text-[12px] text-white hover:bg-[#3c6460] transition-colors"
                     iconSize={13}
                     stopPropagation
+                    itemData={{ id: `${category}-similar-${p.id}`, title: p.name, price: parseInt(p.price.replace(/[^\d]/g, "")), img: p.img, master: "" }}
                   />
                 </div>
               );
@@ -1290,13 +1803,14 @@ export function ProductPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-['Manrope',sans-serif] font-semibold text-[14px] text-black truncate">{product.name}</p>
                   <p className="font-['Manrope',sans-serif] font-bold text-[18px] text-black leading-none">
-                    {product.price.toLocaleString("ru-RU")} ₸
+                    {(qty > 1 ? totalPrice : product.price).toLocaleString("ru-RU")} ₸
                   </p>
                 </div>
                 <AnimatedCartButton
                   qty={qty}
                   className="shrink-0 h-[46px] px-[28px] rounded-full flex items-center justify-center bg-[#315350] hover:bg-[#3c6460] transition-colors font-['Manrope',sans-serif] font-semibold text-[14px] text-white"
                   iconSize={16}
+                  itemData={{ id: `${category}-${product.id}`, title: product.name, price: product.price, img: GALLERY[0], master: product.master }}
                 />
               </div>
             </motion.div>

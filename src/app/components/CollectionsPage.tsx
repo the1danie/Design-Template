@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { ChevronDown, ChevronRight, Flame, Star, Sparkles, BadgeCheck, Clock, LayoutGrid, List } from "lucide-react";
+import { ChevronDown, Flame, Star, Sparkles, BadgeCheck, Clock, LayoutGrid, List } from "lucide-react";
 import svgPaths from "../../imports/Главная1/svg-7zpnau8iqv";
 import imgCat1 from "../../imports/Главная1/8b6bb52a3edf386cb865b41ec89559fc52b9ac8b.png";
 import imgCat2 from "../../imports/Главная1/bb11288ae7495004fa7935a2c8c92dfeb19e39c2.png";
@@ -9,6 +9,9 @@ import imgCat4 from "../../imports/Главная1/c82f907c58912fd52cfe2dafef2f9
 import imgCat5 from "../../imports/Главная1/1a127ff4aeda0ca697d11c7943256279991814e2.png";
 import imgCat6 from "../../imports/Главная1/24390a85724f954aa31bb0f87a83125f1714f165.png";
 import imgImage8 from "../../imports/Главная1/2f8c2d4769fcbe496b4559a5853a97d632a4eeaa.png";
+import { PageBreadcrumb } from "./PageBreadcrumb";
+import { PageControlButton, PageControlGroup, SegmentedControl } from "./PageControls";
+import { PageHeader } from "./PageHeader";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -154,6 +157,8 @@ const QUICK_TABS = [
   { label: "Топ-мастера", collectionId: "top" },
 ];
 
+const NEW_TABS = ["Все новинки", "Украшения", "Текстиль", "Свечи", "Игрушки"];
+
 const SORT_OPTIONS = ["Популярные", "Новинки", "Сначала дешевые", "Сначала дорогие"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -283,14 +288,27 @@ function ProductCard({ p, catSlug, onFav, faved }: {
 
 export function CollectionsPage() {
   const navigate = useNavigate();
-  const [activeId, setActiveId] = useState("home");
+  const location = useLocation();
+  const isNewPage = location.pathname === "/new";
+  const [activeId, setActiveId] = useState(() => location.pathname === "/new" ? "new" : "home");
+  const [newFilter, setNewFilter] = useState(NEW_TABS[0]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState(SORT_OPTIONS[0]);
   const [sortOpen, setSortOpen] = useState(false);
 
   const active = COLLECTIONS.find((c) => c.id === activeId) ?? COLLECTIONS[0];
-  const products = [...active.products].sort((a, b) => {
+  const activeProducts = isNewPage && newFilter !== NEW_TABS[0]
+    ? active.products.filter((product) => {
+      const text = `${product.name} ${product.master}`.toLowerCase();
+      if (newFilter === "Украшения") return text.includes("серьг") || text.includes("коль") || text.includes("браслет") || text.includes("кожаные серьги");
+      if (newFilter === "Текстиль") return text.includes("сумк") || text.includes("войл") || text.includes("шляп");
+      if (newFilter === "Свечи") return text.includes("свеч");
+      if (newFilter === "Игрушки") return text.includes("игруш");
+      return true;
+    })
+    : active.products;
+  const products = [...activeProducts].sort((a, b) => {
     if (sort === "Новинки") return b.id - a.id;
     if (sort === "Сначала дешевые") return a.price - b.price;
     if (sort === "Сначала дорогие") return b.price - a.price;
@@ -301,128 +319,130 @@ export function CollectionsPage() {
     setFavorites((prev) => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
   }
 
+  useEffect(() => {
+    setActiveId(location.pathname === "/new" ? "new" : "home");
+  }, [location.pathname]);
+
+  const headerActions = (
+    <>
+      <SegmentedControl className="hidden lg:flex">
+        {[
+          { mode: "grid" as const, Icon: LayoutGrid, label: "Плитка" },
+          { mode: "list" as const, Icon: List, label: "Список" },
+        ].map(({ mode, Icon, label }) => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className="size-[30px] rounded-full flex items-center justify-center transition-colors"
+            style={{ background: viewMode === mode ? "#315350" : "transparent", color: viewMode === mode ? "#fff" : "#374957" }}
+            aria-label={label}
+          >
+            <Icon size={14} />
+          </button>
+        ))}
+      </SegmentedControl>
+
+      <div className="relative">
+        <button onClick={() => setSortOpen((open) => !open)}
+          className="h-[36px] px-[14px] flex items-center gap-[8px] font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] border border-[rgba(55,73,87,0.16)] bg-white rounded-full hover:border-[#315350] transition-colors">
+          {sort}
+          <ChevronDown size={13} className={`transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`} />
+        </button>
+        {sortOpen && (
+          <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(55,73,87,0.1)] rounded-[14px] shadow-xl z-20 w-52 py-1 overflow-hidden">
+            {SORT_OPTIONS.map((option) => (
+              <button key={option} onClick={() => { setSort(option); setSortOpen(false); }}
+                className="w-full text-left px-4 py-[10px] font-['Manrope',sans-serif] font-medium text-[13px] hover:bg-[#f5f3ed] transition-colors"
+                style={{ color: sort === option ? "#315350" : "#374957" }}>
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="bg-[#fbfbf8] min-h-screen">
       <div className="max-w-[1440px] mx-auto px-[80px] py-[36px]">
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-[6px] mb-8">
-          <button onClick={() => navigate("/")} className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#92887d] hover:text-[#315350] transition-colors">
-            Главная
-          </button>
-          <ChevronRight size={12} className="text-[#c5bdb5]" />
-          <span className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957]">Подборки</span>
-        </nav>
+        <PageBreadcrumb
+          items={[
+            { label: "Главная", path: "/" },
+            ...(isNewPage ? [] : [{ label: "Подборки", path: "/collections" }]),
+            { label: active.title },
+          ]}
+        />
+
+        <PageHeader
+          title={active.title}
+          description={active.description}
+          stats={[{ value: active.count.toString(), label: "товаров" }]}
+          actions={headerActions}
+        >
+          <PageControlGroup>
+            {(isNewPage ? NEW_TABS : QUICK_TABS).map((tab) => {
+              if (typeof tab === "string") {
+                return (
+                  <PageControlButton
+                    key={tab}
+                    onClick={() => setNewFilter(tab)}
+                    active={newFilter === tab}
+                  >
+                    {tab}
+                  </PageControlButton>
+                );
+              }
+              const activeTab = activeId === tab.collectionId;
+              return (
+                <PageControlButton
+                  key={tab.label}
+                  onClick={() => setActiveId(tab.collectionId)}
+                  active={activeTab}
+                >
+                  {tab.label}
+                </PageControlButton>
+              );
+            })}
+          </PageControlGroup>
+        </PageHeader>
 
         <div className="flex gap-[48px]">
 
           {/* Sidebar */}
-          <aside className="w-[220px] shrink-0">
-            <p style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[22px] text-black mb-[20px]">
-              Подборки
-            </p>
+          {!isNewPage && (
+            <aside className="w-[220px] shrink-0">
+              <p style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[22px] text-black mb-[20px]">
+                Подборки
+              </p>
 
-            {/* Collection list */}
-            <div className="flex flex-col gap-[4px] mb-[32px]">
-              {COLLECTIONS.map((col) => (
-                <button key={col.id} onClick={() => setActiveId(col.id)}
-                  className="flex items-center justify-between px-[14px] py-[10px] rounded-[14px] text-left transition-all group"
-                  style={activeId === col.id
-                    ? { background: "#315350", color: "#fff" }
-                    : { background: "transparent", color: "#374957" }}>
-                  <span className="font-['Manrope',sans-serif] font-medium text-[14px]">{col.title}</span>
-                  <span className="font-['Manrope',sans-serif] text-[12px] opacity-60">{col.count}</span>
-                </button>
-              ))}
-            </div>
+              {/* Collection list */}
+              <div className="flex flex-col gap-[4px] mb-[32px]">
+                {COLLECTIONS.map((col) => (
+                  <button key={col.id} onClick={() => setActiveId(col.id)}
+                    className="flex items-center justify-between px-[14px] py-[10px] rounded-[14px] text-left transition-all group"
+                    style={activeId === col.id
+                      ? { background: "#315350", color: "#fff" }
+                      : { background: "transparent", color: "#374957" }}>
+                    <span className="font-['Manrope',sans-serif] font-medium text-[14px]">{col.title}</span>
+                    <span className="font-['Manrope',sans-serif] text-[12px] opacity-60">{col.count}</span>
+                  </button>
+                ))}
+              </div>
 
-            {/* Active collection cover */}
-            <div className="rounded-[20px] overflow-hidden mb-[8px] aspect-[4/3]" style={{ background: active.coverColor }}>
-              <img src={active.coverImg} alt={active.title} className="w-full h-full object-cover" />
-            </div>
-            <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d] leading-[1.5] px-[2px]">
-              {active.description}
-            </p>
-          </aside>
+              {/* Active collection cover */}
+              <div className="rounded-[20px] overflow-hidden mb-[8px] aspect-[4/3]" style={{ background: active.coverColor }}>
+                <img src={active.coverImg} alt={active.title} className="w-full h-full object-cover" />
+              </div>
+              <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d] leading-[1.5] px-[2px]">
+                {active.description}
+              </p>
+            </aside>
+          )}
 
           {/* Main */}
           <div className="flex-1 min-w-0">
-
-            {/* Header */}
-            <div className="mb-[6px]">
-              <div className="flex items-start justify-between gap-[20px] mb-[6px]">
-                <div>
-                  <div className="flex items-baseline gap-[12px] mb-[6px]">
-                    <h1 style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[32px] text-black leading-none">
-                      {active.title}
-                    </h1>
-                    <span className="font-['Manrope',sans-serif] font-normal text-[15px] text-[rgba(0,0,0,0.4)]">
-                      {active.count} товаров
-                    </span>
-                  </div>
-                  <p className="font-['Manrope',sans-serif] font-normal text-[14px] text-[rgba(0,0,0,0.55)] leading-[1.6] max-w-[620px] mb-[20px]">
-                    {active.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="hidden lg:flex items-center rounded-full border border-[rgba(55,73,87,0.15)] bg-white p-[3px]">
-                    {[
-                      { mode: "grid" as const, Icon: LayoutGrid, label: "Плитка" },
-                      { mode: "list" as const, Icon: List, label: "Список" },
-                    ].map(({ mode, Icon, label }) => (
-                      <button
-                        key={mode}
-                        onClick={() => setViewMode(mode)}
-                        className="size-[30px] rounded-full flex items-center justify-center transition-colors"
-                        style={{ background: viewMode === mode ? "#315350" : "transparent", color: viewMode === mode ? "#fff" : "#374957" }}
-                        aria-label={label}
-                      >
-                        <Icon size={14} />
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="relative">
-                    <button onClick={() => setSortOpen((open) => !open)}
-                      className="flex items-center gap-[8px] font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] border border-[rgba(55,73,87,0.15)] bg-white rounded-full px-[16px] py-[8px] hover:border-[#315350] transition-colors">
-                      {sort}
-                      <ChevronDown size={13} className={`transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {sortOpen && (
-                      <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(55,73,87,0.1)] rounded-[14px] shadow-xl z-20 w-52 py-1 overflow-hidden">
-                        {SORT_OPTIONS.map((option) => (
-                          <button key={option} onClick={() => { setSort(option); setSortOpen(false); }}
-                            className="w-full text-left px-4 py-[10px] font-['Manrope',sans-serif] font-medium text-[13px] hover:bg-[#f5f3ed] transition-colors"
-                            style={{ color: sort === option ? "#315350" : "#374957" }}>
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Sub-collection tabs */}
-              <div className="flex items-center gap-[8px] mb-[24px] flex-wrap">
-                {QUICK_TABS.map((tab) => {
-                  const activeTab = activeId === tab.collectionId;
-                  return (
-                    <button
-                      key={tab.label}
-                      onClick={() => setActiveId(tab.collectionId)}
-                      className="h-[32px] px-[14px] rounded-full font-['Manrope',sans-serif] font-medium text-[13px] border transition-colors"
-                      style={activeTab
-                        ? { background: "#315350", borderColor: "#315350", color: "#fff" }
-                        : { background: "#fff", borderColor: "rgba(55,73,87,0.18)", color: "#374957" }}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* Product grid */}
             <div className={viewMode === "grid"

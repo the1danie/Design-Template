@@ -12,6 +12,9 @@ import imgCat5 from "../../imports/Главная1/1a127ff4aeda0ca697d11c7943256
 import imgCat6 from "../../imports/Главная1/24390a85724f954aa31bb0f87a83125f1714f165.png";
 import imgImage8 from "../../imports/Главная1/2f8c2d4769fcbe496b4559a5853a97d632a4eeaa.png";
 import { ALL_CATEGORIES, CATEGORY_MAP, type Product, type Badge } from "../catalogData";
+import { PageBreadcrumb } from "./PageBreadcrumb";
+import { SegmentedControl } from "./PageControls";
+import { PageHeader } from "./PageHeader";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -466,6 +469,9 @@ export function CatalogPage() {
   const isCategoryPage = Boolean(config);
   const currentCategory = config?.slug;
   const pageTitle = config?.title ?? "Каталог товаров";
+  const pageDescription = isCategoryPage
+    ? `Авторские товары в категории «${pageTitle}»: ручная работа, проверенные мастера и локальное производство.`
+    : "Все категории Crafty в одном месте: украшения, текстиль, декор, свечи, игрушки и другие handmade-изделия.";
   const allCatalogProducts = ALL_CATEGORIES.flatMap((item) =>
     item.products.map((product) => ({ product, catSlug: item.slug }))
   );
@@ -521,6 +527,49 @@ export function CatalogPage() {
 
   const materials = currentCategory ? MATERIALS_BY_CATEGORY[currentCategory] ?? DEFAULT_MATERIALS : [];
 
+  const headerActions = (
+    <>
+      <button className="lg:hidden h-[36px] px-[14px] flex items-center gap-[7px] font-['Manrope',sans-serif] font-medium text-[13px] border border-[rgba(55,73,87,0.16)] rounded-full bg-white text-[#374957]"
+        onClick={() => setMobileFiltersOpen(true)}>
+        <SlidersHorizontal size={13} /> Фильтры
+      </button>
+      <SegmentedControl className="hidden lg:flex">
+        {[
+          { mode: "grid" as const, Icon: LayoutGrid, label: "Плитка" },
+          { mode: "list" as const, Icon: List, label: "Список" },
+        ].map(({ mode, Icon, label }) => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className="size-[30px] rounded-full flex items-center justify-center transition-colors"
+            style={{ background: viewMode === mode ? "#315350" : "transparent", color: viewMode === mode ? "#fff" : "#374957" }}
+            aria-label={label}
+          >
+            <Icon size={14} />
+          </button>
+        ))}
+      </SegmentedControl>
+      <div className="relative">
+        <button onClick={() => setSortOpen(!sortOpen)}
+          className="h-[36px] px-[14px] flex items-center gap-[8px] font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] border border-[rgba(55,73,87,0.16)] bg-white rounded-full hover:border-[#315350] transition-colors">
+          {sort}
+          <ChevronDown size={13} className={`transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`} />
+        </button>
+        {sortOpen && (
+          <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(55,73,87,0.1)] rounded-[14px] shadow-xl z-20 w-56 py-1 overflow-hidden">
+            {SORT_OPTIONS.map((o) => (
+              <button key={o} onClick={() => { setSort(o); setSortOpen(false); }}
+                className="w-full text-left px-4 py-[10px] font-['Manrope',sans-serif] font-medium text-[13px] hover:bg-[#f5f3ed] transition-colors"
+                style={{ color: sort === o ? "#315350" : "#374957" }}>
+                {o}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   const sidebar = (
     <FilterSidebar
       checkedSubs={checkedSubs} toggleSub={toggleSub}
@@ -539,84 +588,32 @@ export function CatalogPage() {
     <div className="flex-1 bg-[#fbfbf8]">
       <div className="max-w-[1440px] mx-auto px-[80px] py-[36px]">
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-[6px] mb-7">
-          {["Главная", "Каталог", ...(isCategoryPage ? [pageTitle] : [])].map((b, i, arr) => (
-            <span key={b} className="flex items-center gap-[6px]">
-              <a href="#" className="font-['Manrope',sans-serif] font-medium text-[13px] text-[#92887d] hover:text-[#315350] transition-colors">{b}</a>
-              {i < arr.length - 1 && <span className="font-['Manrope',sans-serif] text-[13px] text-[#c5bdb5]">/</span>}
-            </span>
-          ))}
-        </nav>
+        <PageBreadcrumb
+          items={[
+            { label: "Главная", path: "/" },
+            { label: "Каталог", path: "/catalog" },
+            ...(isCategoryPage ? [{ label: pageTitle }] : []),
+          ]}
+        />
+
+        <PageHeader
+          title={pageTitle}
+          description={pageDescription}
+          stats={[{ value: productCountText(filteredCount), label: "найдено" }]}
+          actions={headerActions}
+        >
+          {hasActiveFilters && (
+            <button onClick={clearAll}
+              className="flex items-center gap-[4px] font-['Manrope',sans-serif] font-medium text-[12px] text-[#e53e3e] hover:underline">
+              <X size={11} /> Очистить все фильтры
+            </button>
+          )}
+        </PageHeader>
 
         <div className="flex gap-[52px]">
           <div className="hidden lg:block">{sidebar}</div>
 
           <div className="flex-1 min-w-0">
-            {/* Title + sort */}
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-baseline gap-[10px]">
-                <h1 style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[30px] text-black leading-none">
-                  {pageTitle}
-                </h1>
-              </div>
-              <div className="flex items-center gap-3">
-                <button className="lg:hidden flex items-center gap-1.5 font-['Manrope',sans-serif] font-medium text-[13px] border border-[rgba(55,73,87,0.2)] rounded-full px-3 py-1.5 bg-white text-[#374957]"
-                  onClick={() => setMobileFiltersOpen(true)}>
-                  <SlidersHorizontal size={13} /> Фильтры
-                </button>
-                <div className="hidden lg:flex items-center rounded-full border border-[rgba(55,73,87,0.15)] bg-white p-[3px]">
-                  {[
-                    { mode: "grid" as const, Icon: LayoutGrid, label: "Плитка" },
-                    { mode: "list" as const, Icon: List, label: "Список" },
-                  ].map(({ mode, Icon, label }) => (
-                    <button
-                      key={mode}
-                      onClick={() => setViewMode(mode)}
-                      className="size-[30px] rounded-full flex items-center justify-center transition-colors"
-                      style={{ background: viewMode === mode ? "#315350" : "transparent", color: viewMode === mode ? "#fff" : "#374957" }}
-                      aria-label={label}
-                    >
-                      <Icon size={14} />
-                    </button>
-                  ))}
-                </div>
-                <div className="relative">
-                  <button onClick={() => setSortOpen(!sortOpen)}
-                    className="flex items-center gap-[8px] font-['Manrope',sans-serif] font-medium text-[13px] text-[#374957] border border-[rgba(55,73,87,0.15)] bg-white rounded-full px-[16px] py-[8px] hover:border-[#315350] transition-colors">
-                    {sort}
-                    <ChevronDown size={13} className={`transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {sortOpen && (
-                    <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(55,73,87,0.1)] rounded-[14px] shadow-xl z-20 w-56 py-1 overflow-hidden">
-                      {SORT_OPTIONS.map((o) => (
-                        <button key={o} onClick={() => { setSort(o); setSortOpen(false); }}
-                          className="w-full text-left px-4 py-[10px] font-['Manrope',sans-serif] font-medium text-[13px] hover:bg-[#f5f3ed] transition-colors"
-                          style={{ color: sort === o ? "#315350" : "#374957" }}>
-                          {o}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* "Found N" counter — prominent, shows result of filters */}
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-[8px]">
-                <span className="font-['Manrope',sans-serif] font-semibold text-[15px] text-[#374957]">
-                  Найдено <span style={{ color: "#315350" }}>{productCountText(filteredCount)}</span>
-                </span>
-                {hasActiveFilters && (
-                  <button onClick={clearAll}
-                    className="flex items-center gap-[4px] font-['Manrope',sans-serif] font-medium text-[12px] text-[#e53e3e] hover:underline ml-2">
-                    <X size={11} /> Очистить все фильтры
-                  </button>
-                )}
-              </div>
-            </div>
-
             {/* Product grid — diverse images via index */}
             <div className={viewMode === "grid"
               ? "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-x-[18px] gap-y-[32px]"
