@@ -574,6 +574,30 @@ const COLLECTIONS_DATA = [
   { label: "Новинки",    image: imgCat4,   gradient: "radial-gradient(circle at 50% 50%, #ffffff, #E8EEF0)", slug: "new" },
 ];
 
+const POPULAR_SEARCHES = [
+  { label: "Украшения", slug: "ukrasheniya" },
+  { label: "Свечи", slug: "sveci" },
+  { label: "Керамика", slug: "handmade" },
+  { label: "Подарки", slug: "gifts" },
+  { label: "Для дома", slug: "home" },
+  { label: "Национальный стиль", slug: "kazakh" },
+];
+
+const TRUST_FEATURES = [
+  { Icon: BadgeCheck, title: "Все мастера проходят модерацию", desc: "Проверяем профиль, контакты и качество карточек до публикации." },
+  { Icon: Sparkles, title: "Ручная работа", desc: "В каталоге изделия малых мастерских, а не массовый поток." },
+  { Icon: ShieldCheck, title: "Безопасная оплата", desc: "Заказ фиксируется на платформе, покупатель получает подтверждение." },
+  { Icon: Truck, title: "Доставка по Казахстану", desc: "Мастера отправляют заказы в Алматы, Астану, Шымкент и другие города." },
+];
+
+const FAQ_ITEMS = [
+  { q: "Как оформить заказ?", a: "Выберите товар, добавьте его в корзину, укажите контакты и способ доставки. После оплаты мастер получит заказ и начнёт подготовку." },
+  { q: "Как работает доставка?", a: "Доставку оформляет мастер через доступные службы по Казахстану. Срок зависит от города, формата изделия и способа отправки." },
+  { q: "Можно ли вернуть товар?", a: "Да, если товар не подошёл или пришёл с дефектом. Для изделий под заказ условия возврата согласуются до оплаты." },
+  { q: "Когда получу заказ?", a: "Готовые товары обычно отправляются в течение 1-3 рабочих дней. Изделия под заказ требуют дополнительного времени на изготовление." },
+  { q: "Как стать мастером?", a: "Нажмите «Стать мастером», заполните заявку и пройдите базовую модерацию. После проверки можно добавлять товары в каталог." },
+];
+
 const MASTER_WORK_IMAGES = [
   imgCat2,
   imgCat1,
@@ -650,14 +674,14 @@ export function HomePage() {
             </div>
 
             <div className="flex items-center gap-[8px] mt-[18px] flex-wrap crafty-fade-up crafty-delay-4">
-              <span className="font-['Manrope',sans-serif] text-[13px] text-[#92887d]">Например:</span>
-              {["Серьги", "Свечи", "Сырмақ", "Керамика"].map((query) => (
+              <span className="font-['Manrope',sans-serif] text-[13px] text-[#92887d]">Популярные запросы:</span>
+              {POPULAR_SEARCHES.map((query) => (
                 <button
-                  key={query}
-                  onClick={() => navigate("/catalog")}
+                  key={query.label}
+                  onClick={() => navigate(`/catalog/${query.slug}`)}
                   className="h-[28px] px-[12px] rounded-full bg-white border border-[rgba(55,73,87,0.12)] font-['Manrope',sans-serif] font-medium text-[12px] text-[#374957] hover:border-[#315350] hover:text-[#315350] transition-colors"
                 >
-                  {query}
+                  {query.label}
                 </button>
               ))}
             </div>
@@ -675,6 +699,23 @@ export function HomePage() {
               <img src={imgCat6} alt="Подарочная упаковка handmade" className="w-full h-full object-cover" />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── Trust features ── */}
+      <section className="max-w-[1440px] mx-auto px-[80px] py-[34px] border-t border-[rgba(55,73,87,0.07)] crafty-section">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-[14px]">
+          {TRUST_FEATURES.map(({ Icon, title, desc }) => (
+            <div key={title} className="bg-white rounded-[18px] border border-[rgba(55,73,87,0.08)] px-[18px] py-[18px] flex gap-[12px] items-start crafty-soft-lift hover:shadow-[0_8px_22px_rgba(49,83,80,0.08)]">
+              <div className="w-[38px] h-[38px] rounded-[13px] bg-[#f0f5f4] flex items-center justify-center shrink-0">
+                <Icon size={18} className="text-[#315350]" />
+              </div>
+              <div>
+                <p className="font-['Manrope',sans-serif] font-bold text-[14px] text-[#374957] leading-snug mb-[4px]">{title}</p>
+                <p className="font-['Manrope',sans-serif] text-[12px] text-[#92887d] leading-[1.5]">{desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -898,7 +939,8 @@ export function HomePage() {
             </div>
           </div>
           <div className="flex gap-[12px] shrink-0">
-            <button className="h-[50px] px-[36px] bg-white text-[#315350] rounded-full font-['Manrope',sans-serif] font-semibold text-[15px] hover:bg-[#f5f3ed] crafty-soft-lift hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)]">
+            <button onClick={() => navigate("/apply")}
+              className="h-[50px] px-[36px] bg-white text-[#315350] rounded-full font-['Manrope',sans-serif] font-semibold text-[15px] hover:bg-[#f5f3ed] crafty-soft-lift hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)]">
               Стать мастером
             </button>
             <button onClick={() => navigate("/masters")}
@@ -927,6 +969,50 @@ export function HomePage() {
                 <p className="font-['Manrope',sans-serif] text-[14px] text-[#92887d] mt-[8px]">{item.label}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Made in Kazakhstan + FAQ ── */}
+      <section className="max-w-[1440px] mx-auto px-[80px] py-[56px] border-t border-[rgba(55,73,87,0.07)] crafty-section">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-[28px] items-start">
+          <div className="rounded-[28px] overflow-hidden min-h-[430px] relative bg-[#315350]">
+            <img src={imgSub1} alt="Изделие ручной работы из Казахстана" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#172825]/90 via-[#172825]/30 to-transparent" />
+            <div className="absolute left-[28px] right-[28px] bottom-[28px]">
+              <div className="inline-flex items-center gap-[7px] h-[32px] px-[12px] rounded-full bg-white/90 mb-[14px]">
+                <BadgeCheck size={14} className="text-[#315350]" />
+                <span className="font-['Manrope',sans-serif] font-semibold text-[12px] text-[#315350]">Сделано в Казахстане</span>
+              </div>
+              <h2 style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[34px] text-white leading-tight mb-[10px]">
+                Поддерживаем местных мастеров
+              </h2>
+              <p className="font-['Manrope',sans-serif] text-[14px] text-white/74 leading-[1.65] max-w-[430px]">
+                Каждая покупка помогает развивать ремесло Казахстана и сохранять авторские техники в современной форме.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[28px] border border-[rgba(55,73,87,0.08)] px-[30px] py-[30px]">
+            <h2 style={{ fontFamily: "'Playfair Display', serif" }} className="font-bold text-[32px] text-black leading-none mb-[8px]">
+              FAQ
+            </h2>
+            <p className="font-['Manrope',sans-serif] text-[14px] text-[#92887d] leading-[1.6] mb-[20px]">
+              Ответы на вопросы, которые чаще всего возникают перед первым заказом.
+            </p>
+            <div className="divide-y divide-[rgba(55,73,87,0.08)]">
+              {FAQ_ITEMS.map((item) => (
+                <details key={item.q} className="group py-[16px]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-[16px]">
+                    <span className="font-['Manrope',sans-serif] font-bold text-[15px] text-[#374957] leading-snug">{item.q}</span>
+                    <ChevronRight size={18} className="text-[#92887d] shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <p className="font-['Manrope',sans-serif] text-[13px] text-[rgba(0,0,0,0.58)] leading-[1.65] mt-[10px] pr-[28px]">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
           </div>
         </div>
       </section>

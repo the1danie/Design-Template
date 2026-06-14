@@ -241,10 +241,10 @@ function SuccessScreen({ email }: { email: string }) {
           </p>
           <div className="flex items-center gap-[12px] justify-center">
             <button
-              onClick={() => navigate("/masters")}
+              onClick={() => navigate("/seller/dashboard")}
               className="h-[50px] px-[28px] bg-[#315350] text-white rounded-full font-['Manrope',sans-serif] font-semibold text-[15px] hover:bg-[#3c6460] transition-colors"
             >
-              К мастерам
+              Кабинет продавца
             </button>
             <button
               onClick={() => navigate("/")}
